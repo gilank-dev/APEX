@@ -3,8 +3,8 @@ export const SITE_CONFIG = {
   fullName: 'Apex — Enterprise Operations Control Node',
   tagline: 'Automated Workflows, Biometric Attendance & Inventory Telemetry',
   description: 'High-performance B2B multi-tenant SaaS platform designed for unified telemetry control, offline-first biometric attendance verification, Kanban task boards, and low-stock SKU tracking.',
-  domain: 'apex.lankdev.com',
-  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://apex.lankdev.com',
+  domain: 'apex.lankdev.my.id',
+  url: process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : 'https://apex.lankdev.my.id'),
   company: {
     name: 'Apex Operations by Lankdev',
     legalName: 'PT Lankdev Multi Teknologi',

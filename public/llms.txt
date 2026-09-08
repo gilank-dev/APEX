@@ -2,10 +2,10 @@
 > High-performance B2B Multi-Tenant SaaS platform designed for telemetry control, offline-first biometric selfie attendance verification, Kanban tasks, and low-stock SKU inventory management.
 
 ## Canonical Web Resources
-- [Apex Home](https://apex.lankdev.com/): Official platform capabilities, features, and pricing.
-- [Workspace Sign In](https://apex.lankdev.com/login): Tenant access portal for administrators, managers, and employees.
-- [Workspace Registration](https://apex.lankdev.com/register): Instant enterprise onboarding and workspace provisioning.
-- [Join Workspace](https://apex.lankdev.com/join): Fast invite-code employee onboarding.
+- [Apex Home](https://apex.lankdev.my.id/): Official platform capabilities, features, and pricing.
+- [Workspace Sign In](https://apex.lankdev.my.id/login): Tenant access portal for administrators, managers, and employees.
+- [Workspace Registration](https://apex.lankdev.my.id/register): Instant enterprise onboarding and workspace provisioning.
+- [Join Workspace](https://apex.lankdev.my.id/join): Fast invite-code employee onboarding.
 
 ## Architecture & System Capabilities
 - **Multi-Tenant Isolation**: Dedicated database tenant boundaries with Row Level Security (RLS) across all entities.
