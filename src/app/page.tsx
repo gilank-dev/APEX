@@ -10,14 +10,14 @@ import LandingFooter from '@/components/landing/LandingFooter'
 import { SITE_CONFIG } from '@/lib/site'
 
 export const metadata: Metadata = {
-  title: 'Apex — Enterprise Operations Control Node | Workforce, Tasks & Inventory',
-  description: 'Empower your workforce with high-performance operations control: automated workflows, biometric selfie attendance verification, Kanban tasks, and low-stock SKU tracking.',
+  title: 'Apex — Absensi Selfie, Payroll Otomatis & Inventaris | Satu Aplikasi',
+  description: 'Absensi selfie terverifikasi, payroll otomatis, dan monitoring stok dalam satu aplikasi. Gratis 14 hari, tanpa kartu kredit.',
   alternates: {
     canonical: '/',
   },
   openGraph: {
-    title: 'Apex — Enterprise Operations Control Node',
-    description: 'Empower your workforce with high-performance operations control: automated workflows, selfie attendance, and inventory telemetry.',
+    title: 'Apex — Absensi Selfie, Payroll Otomatis & Inventaris | Satu Aplikasi',
+    description: 'Absensi selfie terverifikasi, payroll otomatis, dan monitoring stok dalam satu aplikasi. Gratis 14 hari, tanpa kartu kredit.',
     url: SITE_CONFIG.url,
   },
 }
@@ -73,16 +73,16 @@ export default function Home() {
         <section className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center w-full max-w-full overflow-hidden">
           <div className="lg:col-span-7 space-y-6 text-left w-full max-w-full">
             <div className="inline-block px-3 py-1 bg-orange-50 border border-primary/20 rounded-[2px] font-mono text-[10px] text-primary uppercase tracking-widest font-semibold max-w-full truncate">
-              AUTOMATED WORKFLOWS, PAYROLL, & INVENTORY
+              ABSENSI • PAYROLL • STOK — SATU DASHBOARD
             </div>
             
             {/* Single Clear H1 Heading */}
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-tight max-w-full break-words">
-              Scale your enterprise operations with lightning-fast automation.
+              Absensi selfie, payroll otomatis, stok kelihatan. Satu aplikasi.
             </h1>
 
             <p className="text-gray-500 text-sm md:text-base max-w-[55ch] leading-relaxed break-words">
-              Empower your workforce. Simplify administration. Reconcile real-time attendance logs, process error-free payroll runs, and monitor inventory items from a single dashboard.
+              Rekap absensi karyawan terverifikasi selfie, hitung gaji otomatis tanpa Excel, dan pantau stok semua cabang dari satu dashboard.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 pt-2 w-full max-w-full">
@@ -94,12 +94,12 @@ export default function Home() {
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
               <a
-                href="https://wa.me/6282124153732?text=Halo%20Apex%2C%20saya%20tertarik%20dengan%20layanan%20demo%20sistem%20HRIS%20perusahaan."
+                href="https://wa.me/6282124153732?text=Halo%2C%20saya%20tertarik%20demo%20Apex.%20Bisa%20lihat%20tampilannya%3F"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-6 py-3.5 bg-white hover:bg-gray-50 text-gray-700 border border-border font-mono text-[11px] font-bold uppercase rounded-[2px] transition-all text-center cursor-pointer active:scale-[0.98] w-full sm:w-auto shrink-0"
               >
-                WhatsApp Sales
+                WhatsApp Demo
               </a>
             </div>
 

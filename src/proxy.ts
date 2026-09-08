@@ -35,6 +35,7 @@ export async function proxy(request: NextRequest) {
     'support',
     'public',
     'super-admin',
+    'pricing',
   ]
   const firstPart = pathParts[0]
   if (blacklist.includes(firstPart)) {

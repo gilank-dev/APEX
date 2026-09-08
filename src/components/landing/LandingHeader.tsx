@@ -43,6 +43,13 @@ export default function LandingHeader() {
             >
               Resources
             </button>
+            <Link
+              href="/pricing"
+              onMouseEnter={() => setActiveMenu(null)}
+              className="hover:text-primary transition-colors cursor-pointer"
+            >
+              Harga
+            </Link>
           </nav>
         </div>
         
@@ -97,6 +104,13 @@ export default function LandingHeader() {
                 className="hover:text-primary py-2 border-b border-gray-100 font-bold"
               >
                 Solusi
+              </Link>
+              <Link 
+                href="/pricing" 
+                onClick={() => setIsMobileMenuOpen(false)} 
+                className="hover:text-primary py-2 border-b border-gray-100 font-bold"
+              >
+                Harga
               </Link>
               <Link 
                 href="#tentang-kami" 

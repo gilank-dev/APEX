@@ -34,6 +34,7 @@ export default function LandingFooter() {
           <div>
             <h4 className="text-xs font-bold text-gray-950 uppercase tracking-widest mb-4">Company</h4>
             <ul className="text-xs text-gray-500 font-mono space-y-2">
+              <li><Link href="/pricing" className="hover:text-primary transition-colors duration-200">Harga / Pricing</Link></li>
               <li><Link href="#tentang-kami" className="hover:text-primary transition-colors duration-200">About Us</Link></li>
               <li>
                 <a 
