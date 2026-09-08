@@ -15,9 +15,33 @@ interface SubscriptionLayoutProps {
   company: Company
 }
 
+function generateRequestCode(slug: string): string {
+  const cleanSlug = (slug || 'APEX')
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .slice(0, 4)
+    .toUpperCase()
+    .padEnd(4, 'X')
+  const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  let randomPart = ''
+  for (let i = 0; i < 6; i++) {
+    randomPart += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return `APX-${cleanSlug}-${randomPart}`
+}
+
+function getFormattedDate(): string {
+  return new Intl.DateTimeFormat('id-ID', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  }).format(new Date())
+}
+
 export default function SubscriptionLayout({ company }: SubscriptionLayoutProps) {
   const [isYearly, setIsYearly] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState<{ name: string; price: string; value: string } | null>(null)
+  const [requestCode, setRequestCode] = useState('')
+  const [requestDate, setRequestDate] = useState('')
 
   const plans = [
     {
@@ -79,15 +103,25 @@ export default function SubscriptionLayout({ company }: SubscriptionLayoutProps)
 
   const handleSelectPlan = (plan: typeof plans[0]) => {
     if (plan.value === company.tier) return
+    if (plan.value === 'free') return
+    const code = generateRequestCode(company.slug)
+    const dateStr = getFormattedDate()
+    setRequestCode(code)
+    setRequestDate(dateStr)
     setSelectedPlan({ name: plan.name, price: plan.price, value: plan.value })
   }
 
-  // Securely build the WhatsApp URL for confirmation
-  const waNumber = '6282124153732'
-  const waText = selectedPlan 
-    ? encodeURIComponent(`Hello Admin, I would like to confirm my subscription payment for the plan ${selectedPlan.name} (${selectedPlan.price}/${isYearly ? 'Year' : 'Month'}) for company ${company.name} (ID: ${company.id}).`)
+  const periodLabel = isYearly ? 'Tahunan' : 'Bulanan'
+  const currentTierLabel = (company.tier || 'free').charAt(0).toUpperCase() + (company.tier || 'free').slice(1)
+  const targetPlanName = selectedPlan ? selectedPlan.name.replace(/ Tier$/i, '') : ''
+
+  const waMessage = selectedPlan
+    ? `Halo Admin Apex, saya mau upgrade paket.\n\nKode Request: ${requestCode}\nPerusahaan: ${company.name} (${company.id})\nSlug: ${company.slug}\nPaket: ${currentTierLabel} → ${targetPlanName}\nHarga: ${selectedPlan.price} / ${periodLabel}\n\nMohon info pembayarannya. Terima kasih.`
     : ''
-  const qrisUrl = `https://wa.me/${waNumber}?text=${waText}`
+
+  const waUrl = selectedPlan
+    ? `https://wa.me/6282124153732?text=${encodeURIComponent(waMessage)}`
+    : ''
 
   return (
     <div className="space-y-8">
@@ -238,7 +272,7 @@ export default function SubscriptionLayout({ company }: SubscriptionLayoutProps)
         })}
       </div>
 
-      {/* Google-style Payment QRIS Modal Overlay */}
+      {/* WhatsApp Upgrade Request Modal */}
       {selectedPlan && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           {/* Backdrop */}
@@ -248,101 +282,100 @@ export default function SubscriptionLayout({ company }: SubscriptionLayoutProps)
           />
 
           {/* Modal Container */}
-          <div className="bg-white border border-border rounded-2xl shadow-2xl p-6 md:p-8 max-w-md w-full relative z-10 animate-in fade-in zoom-in-95 duration-200 space-y-6">
+          <div className="bg-white border border-border rounded-2xl shadow-2xl p-6 md:p-8 max-w-lg w-full relative z-10 animate-in fade-in zoom-in-95 duration-200 space-y-6 max-h-[90vh] overflow-y-auto">
             {/* Close Button */}
             <button
               onClick={() => setSelectedPlan(null)}
               className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center border border-border rounded-full hover:bg-gray-50 transition-colors active:scale-90 cursor-pointer"
-              aria-label="Close modal"
+              aria-label="Tutup modal"
             >
               <X className="w-4 h-4 text-gray-500" />
             </button>
 
             {/* Header */}
             <div className="border-b border-border pb-4 pr-6">
-              <span className="text-[9px] font-mono font-bold text-primary uppercase bg-orange-50 border border-primary/20 px-2 py-0.5 rounded-[2px] tracking-wide">
-                Invoice & Activation
-              </span>
+              <div className="flex items-center gap-2 flex-wrap mb-1">
+                <span className="text-[10px] font-mono font-bold text-primary uppercase bg-orange-50 border border-primary/20 px-2 py-0.5 rounded-[2px] tracking-wide">
+                  {requestCode}
+                </span>
+                <span className="text-[10px] font-mono text-gray-500">
+                  {requestDate}
+                </span>
+              </div>
               <h3 className="text-lg font-extrabold text-gray-900 mt-2 font-sans">
-                Activate {selectedPlan.name}
+                Permintaan Upgrade {selectedPlan.name}
               </h3>
-              <p className="text-xs text-gray-500 font-mono mt-1 uppercase">
-                BILLING ID: {company.slug.toUpperCase()}_{new Date().getTime().toString().slice(-6)}
-              </p>
             </div>
 
-            {/* QRIS Code */}
-            <div className="flex flex-col items-center gap-4 bg-gray-50 p-6 rounded-xl border border-border">
-              <svg viewBox="0 0 100 100" className="w-44 h-44 shadow-sm bg-white p-2 rounded-lg">
-                <rect width="100" height="100" fill="white" />
-                <rect x="5" y="5" width="25" height="25" fill="#0C111D" />
-                <rect x="10" y="10" width="15" height="15" fill="white" />
-                <rect x="12" y="12" width="11" height="11" fill="#0C111D" />
+            {/* Body Explanation */}
+            <div className="bg-orange-50/50 border border-orange-200/60 rounded-xl p-4 text-xs text-gray-700 leading-relaxed">
+              Pembayaran dilakukan manual via WhatsApp. Setelah konfirmasi transfer, admin akan mengaktifkan paket Anda (maks. 1x24 jam).
+            </div>
 
-                <rect x="70" y="5" width="25" height="25" fill="#0C111D" />
-                <rect x="75" y="10" width="15" height="15" fill="white" />
-                <rect x="77" y="12" width="11" height="11" fill="#0C111D" />
-
-                <rect x="5" y="70" width="25" height="25" fill="#0C111D" />
-                <rect x="10" y="75" width="15" height="15" fill="white" />
-                <rect x="12" y="77" width="11" height="11" fill="#0C111D" />
-
-                {/* Center QRIS logo */}
-                <rect x="42" y="42" width="16" height="16" fill="#0C111D" />
-                <rect x="44" y="44" width="12" height="12" fill="white" />
-                <text x="50" y="52" fontSize="6" fontWeight="bold" textAnchor="middle" fill="#0C111D" fontFamily="monospace">QRIS</text>
-
-                {/* Random noise squares */}
-                <rect x="40" y="10" width="10" height="5" fill="#0C111D" />
-                <rect x="55" y="15" width="5" height="15" fill="#0C111D" />
-                <rect x="15" y="40" width="5" height="15" fill="#0C111D" />
-                <rect x="40" y="70" width="15" height="5" fill="#0C111D" />
-                <rect x="70" y="40" width="5" height="10" fill="#0C111D" />
-                <rect x="80" y="55" width="10" height="5" fill="#0C111D" />
-                <rect x="45" y="80" width="5" height="10" fill="#0C111D" />
-                <rect x="80" y="80" width="10" height="10" fill="#0C111D" />
-              </svg>
-              <div className="text-center">
-                <span className="text-[10px] font-mono font-bold text-gray-500 uppercase tracking-widest block">
-                  APEX PAY_GATEWAY
-                </span>
-                <span className="text-[11px] text-gray-900 font-extrabold mt-1 block">
-                  TOTAL AMOUNT: {selectedPlan.price}
-                </span>
+            {/* Detail Table */}
+            <div className="border border-border rounded-xl overflow-hidden bg-gray-50 text-xs">
+              <div className="divide-y divide-border">
+                <div className="grid grid-cols-3 px-4 py-2.5">
+                  <span className="text-gray-500 font-mono uppercase text-[10px]">Perusahaan</span>
+                  <span className="col-span-2 font-semibold text-gray-900">{company.name}</span>
+                </div>
+                <div className="grid grid-cols-3 px-4 py-2.5">
+                  <span className="text-gray-500 font-mono uppercase text-[10px]">Slug</span>
+                  <span className="col-span-2 font-mono text-gray-700">{company.slug}</span>
+                </div>
+                <div className="grid grid-cols-3 px-4 py-2.5">
+                  <span className="text-gray-500 font-mono uppercase text-[10px]">ID Perusahaan</span>
+                  <span className="col-span-2 font-mono text-gray-700 truncate" title={company.id}>{company.id}</span>
+                </div>
+                <div className="grid grid-cols-3 px-4 py-2.5">
+                  <span className="text-gray-500 font-mono uppercase text-[10px]">Paket</span>
+                  <span className="col-span-2 font-bold text-primary">
+                    {currentTierLabel} → {targetPlanName}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 px-4 py-2.5">
+                  <span className="text-gray-500 font-mono uppercase text-[10px]">Harga</span>
+                  <span className="col-span-2 font-bold text-gray-900">{selectedPlan.price}</span>
+                </div>
+                <div className="grid grid-cols-3 px-4 py-2.5">
+                  <span className="text-gray-500 font-mono uppercase text-[10px]">Periode</span>
+                  <span className="col-span-2 font-semibold text-gray-800">{periodLabel}</span>
+                </div>
               </div>
             </div>
 
-            {/* Instruction Steps */}
-            <div className="space-y-3.5 text-xs text-gray-600 leading-relaxed">
-              <div className="flex gap-3">
-                <span className="w-5 h-5 shrink-0 bg-primary/10 text-primary font-extrabold text-[10px] flex items-center justify-center rounded-full">1</span>
-                <span>Scan the QRIS code above using your banking app or e-wallet.</span>
+            {/* Step List */}
+            <div className="space-y-3 text-xs text-gray-600 leading-relaxed">
+              <p className="text-[11px] font-mono uppercase font-bold text-gray-400 tracking-wider">Langkah Pembayaran:</p>
+              <div className="flex gap-3 items-start">
+                <span className="w-5 h-5 shrink-0 bg-primary/10 text-primary font-extrabold text-[10px] flex items-center justify-center rounded-full mt-0.5">1</span>
+                <span>Klik tombol WhatsApp di bawah (pesan terisi otomatis)</span>
               </div>
-              <div className="flex gap-3">
-                <span className="w-5 h-5 shrink-0 bg-primary/10 text-primary font-extrabold text-[10px] flex items-center justify-center rounded-full">2</span>
-                <span>Complete the payment matching your chosen plan price.</span>
+              <div className="flex gap-3 items-start">
+                <span className="w-5 h-5 shrink-0 bg-primary/10 text-primary font-extrabold text-[10px] flex items-center justify-center rounded-full mt-0.5">2</span>
+                <span>Admin kirim detail pembayaran</span>
               </div>
-              <div className="flex gap-3">
-                <span className="w-5 h-5 shrink-0 bg-primary/10 text-primary font-extrabold text-[10px] flex items-center justify-center rounded-full">3</span>
-                <span>Send the payment screenshot and confirmation to WhatsApp Admin below.</span>
+              <div className="flex gap-3 items-start">
+                <span className="w-5 h-5 shrink-0 bg-primary/10 text-primary font-extrabold text-[10px] flex items-center justify-center rounded-full mt-0.5">3</span>
+                <span>Setelah transfer dikonfirmasi, paket aktif dan notifikasi dikirim</span>
               </div>
             </div>
 
             {/* Actions */}
             <div className="pt-2 flex flex-col gap-3">
               <a
-                href={qrisUrl}
+                href={waUrl}
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="w-full inline-block text-center py-3.5 bg-green-600 hover:bg-green-500 text-white font-mono text-xs font-bold uppercase rounded-[4px] transition-colors cursor-pointer shadow-md shadow-green-100 active:scale-[0.98]"
               >
-                Confirm Payment via WhatsApp
+                Lanjut ke WhatsApp
               </a>
               <button
                 onClick={() => setSelectedPlan(null)}
                 className="w-full text-center py-3 bg-white hover:bg-gray-50 text-gray-500 font-mono text-xs uppercase rounded-[4px] border border-border hover:border-gray-400 transition-colors cursor-pointer active:scale-[0.98]"
               >
-                Cancel
+                Batal
               </button>
             </div>
           </div>

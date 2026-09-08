@@ -1,8 +1,18 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import SuperAdminClientPage from './SuperAdminClientPage'
+import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = {
+  title: 'Super Admin Command Center',
+  description: 'Global multi-tenant system oversight and telemetry monitoring node.',
+  robots: {
+    index: false,
+    follow: false,
+  },
+}
 
 export default async function SuperAdminDashboardPage() {
   const supabase = await createClient()
@@ -13,8 +23,10 @@ export default async function SuperAdminDashboardPage() {
     redirect('/login')
   }
 
-  // 2. Strict Super Admin email authorization check
-  if (user.email !== 'super-lankdev@apex.local') {
+  // 2. Strict Super Admin authorization check (both email and metadata role required)
+  const superAdminEmail = process.env.SUPER_ADMIN_EMAIL || 'super-lankdev@apex.internal'
+  const isSuperAdmin = user.email === superAdminEmail && user.user_metadata?.role === 'super-admin'
+  if (!isSuperAdmin) {
     const slug = user.user_metadata?.company_slug || ''
     redirect(slug ? `/${slug}/dashboard` : '/login')
   }
@@ -41,7 +53,7 @@ export default async function SuperAdminDashboardPage() {
       companies={companies || []}
       attendanceCount={attendanceCount || 0}
       tasksCount={tasksCount || 0}
-      adminEmail={user.email}
+      adminEmail={user.email || superAdminEmail}
     />
   )
 }

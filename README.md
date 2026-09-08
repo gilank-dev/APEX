@@ -102,7 +102,12 @@ Deploy the following schema migration located in [supabase/migrations/2026062700
 ---
 
 ## 🔑 Accessing Super Admin Command Center
-To access the centralized monitoring dashboard:
-1. Navigate to `/login`.
-2. Input the special username: `super-lankdev` and password: `super-lankdev`.
-3. The platform will automatically execute auto-seeding routines to initialize your master administrator credentials and redirect you to `/super-admin`.
+To initialize and access the centralized monitoring dashboard:
+1. Configure environment variables in `.env`:
+   - `SUPER_ADMIN_EMAIL=admin@yourdomain.com`
+   - `SUPER_ADMIN_PASSWORD=YourStrongPassword123` (minimum 12 characters, including uppercase, lowercase, and numbers).
+2. Execute the one-time bootstrap endpoint:
+   ```bash
+   curl -X POST http://localhost:3000/api/bootstrap/super-admin
+   ```
+3. Navigate to `/login` and sign in with your configured administrator credentials to access `/super-admin`.

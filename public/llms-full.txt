@@ -1,0 +1,26 @@
+# APEX — Enterprise Operations Control Node (Full Documentation)
+
+APEX is a B2B Multi-Tenant Operations Platform engineered with Next.js 16 (App Router), React 19, TypeScript, Supabase PostgreSQL, and Tailwind CSS v4.
+
+## System Index & Endpoints
+1. `/` — Primary Landing Page & Architecture Showcase
+2. `/login` — Central Authentication Gateway
+3. `/register` — Multi-Tenant Organization Provisioning
+4. `/join` — Anonymous Employee Code Onboarding
+5. `/[slug]/dashboard` — Organization Operations Control Center
+6. `/[slug]/attendance` — Geo-Locked Biometric Selfie Attendance Log
+7. `/[slug]/tasks` — Kanban Board with Status Transitions
+8. `/[slug]/inventory` — SKU Asset Ledger & Stock Warnings
+9. `/[slug]/billing` — Tier Quota Invoicing & WhatsApp Payment Handlers
+10. `/[slug]/admin` — Organization Settings, Invite Management, & Custom Sub-modules
+11. `/super-admin` — Platform Telemetry & Multi-Tenant Overseer
+12. `/api/bootstrap/super-admin` — Fail-Closed Super Admin Initialization
+13. `/api/webhooks/whatsapp` — HMAC-SHA256 Authenticated Billing Sync
+14. `/api/cron/cleanup` — Routine Pruning for Inactive Data
+
+## Technical Foundations & Invariants
+- **Database Model**: Supabase PostgreSQL with enforced Row Level Security (RLS). Cross-tenant queries are blocked at the engine layer.
+- **Client Offline Storage**: `idb-keyval` stores attendance selfies and offline tasks encrypted locally.
+- **Webhook Security**: Enforces HMAC-SHA256 signatures with 300-second timestamp freshness windows and timing-safe comparison.
+- **Brute Force Protection**: In-memory rate limiting bounds join attempts per IP and invitation code.
+- **Design Tokens**: Industrial dark palette (`#0C111D` background, `#38BDF8` sky blue accent, sharp 2px radius).

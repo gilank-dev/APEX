@@ -129,8 +129,8 @@ export default function SuperAdminClientPage({
               AP
             </div>
             <div>
-              <h1 className="text-sm font-black uppercase tracking-wider text-foreground">APEX PLATFORM</h1>
-              <p className="text-[10px] font-mono text-gray-400">SUPER_LANKDEV // COMMAND_CENTER</p>
+              <h1 className="text-sm font-black uppercase tracking-wider text-foreground">Apex Platform Command Center</h1>
+              <p className="text-[10px] font-mono text-gray-400">SUPER_LANKDEV // GLOBAL_TELEMETRY</p>
             </div>
           </div>
 

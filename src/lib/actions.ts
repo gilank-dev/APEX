@@ -1,7 +1,14 @@
 'use server'
 
 import { createAdminClient, createClient } from './supabase/server'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
+import { createRateLimiter } from './security'
+
+// Best-effort in-memory rate limiter for serverless environment. Upgrade path: Upstash Redis.
+const joinRateLimiter = createRateLimiter({
+  maxAttempts: 10,
+  windowMs: 10 * 60 * 1000,
+})
 
 // Slug blacklist check
 const BLACKLIST = [
@@ -144,28 +151,9 @@ export async function loginAdminAction(prevState: any, formData: FormData) {
     return { error: 'Email and password are required.' }
   }
 
-  // Intercept super-admin credentials
+  // Intercept super-admin credentials: map alias to env email
   if (email.trim() === 'super-lankdev') {
-    email = 'super-lankdev@apex.local'
-
-    // Auto-create/seed the super admin user if they don't exist yet
-    const adminClient = createAdminClient()
-    const { data: existingUser } = await adminClient.auth.admin.listUsers()
-    const foundAdmin = existingUser?.users?.find(u => u.email === 'super-lankdev@apex.local')
-    if (!foundAdmin) {
-      const { error: seedError } = await adminClient.auth.admin.createUser({
-        email: 'super-lankdev@apex.local',
-        password: 'super-lankdev',
-        email_confirm: true,
-        user_metadata: {
-          role: 'super-admin',
-          company_slug: 'super-admin'
-        }
-      })
-      if (seedError) {
-        console.error('Failed to seed super admin:', seedError)
-      }
-    }
+    email = process.env.SUPER_ADMIN_EMAIL || 'super-lankdev@apex.internal'
   }
 
   const client = await createClient()
@@ -175,7 +163,7 @@ export async function loginAdminAction(prevState: any, formData: FormData) {
   })
 
   if (error || !data.user) {
-    return { error: error?.message || 'Login failed. Please verify your email and password.' }
+    return { error: 'Invalid email or password.' }
   }
 
   const companySlug = data.user.user_metadata?.company_slug
@@ -192,13 +180,30 @@ export async function joinEmployeeAction(prevState: any, formData: FormData) {
     return { error: 'All fields are required.' }
   }
 
+  // Rate limiting per IP + per code: max 10 attempts / 10 minutes
+  let ip = 'unknown'
+  try {
+    const headerList = await headers()
+    ip = headerList.get('x-forwarded-for')?.split(',')[0].trim() || headerList.get('x-real-ip') || 'unknown'
+  } catch {
+    ip = 'unknown'
+  }
+
+  const normalizedCode = inviteCode.trim().toUpperCase()
+  const ipCheck = joinRateLimiter.check(`ip:${ip}`)
+  const codeCheck = joinRateLimiter.check(`code:${normalizedCode}`)
+
+  if (!ipCheck.allowed || !codeCheck.allowed) {
+    return { error: 'Invalid or expired invitation code.' }
+  }
+
   const adminClient = createAdminClient()
 
   // 1. Look up role and company details
   const { data: role, error: roleError } = await adminClient
     .from('roles')
     .select('*, companies(*)')
-    .eq('invite_code', inviteCode.trim().toUpperCase())
+    .eq('invite_code', normalizedCode)
     .maybeSingle()
 
   if (roleError || !role) {

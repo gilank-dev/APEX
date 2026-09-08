@@ -1,6 +1,19 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import type { Metadata } from 'next'
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params
+  const formatted = slug.toUpperCase()
+  return {
+    title: `Control Center (${formatted})`,
+    description: `Real-time workforce telemetry, daily attendance counts, active tasks, and inventory alerts for ${slug}.`,
+    alternates: {
+      canonical: `/${slug}/dashboard`,
+    },
+  }
+}
 
 export default async function DashboardPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params

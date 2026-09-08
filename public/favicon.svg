@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect width="64" height="64" rx="8" fill="#0C111D"/>
+  <rect x="4" y="4" width="56" height="56" rx="6" fill="none" stroke="#F97316" stroke-width="3"/>
+  <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#F97316" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="28" letter-spacing="-1">AP</text>
+</svg>

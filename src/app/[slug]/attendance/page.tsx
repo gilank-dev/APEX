@@ -370,7 +370,7 @@ export default function AttendancePage() {
                   {cameraActive ? (
                     <video ref={videoRef} autoPlay playsInline className="absolute inset-0 w-full h-full object-cover" />
                   ) : photoData ? (
-                    <img src={photoData} alt="Selfie preview" className="absolute inset-0 w-full h-full object-cover" />
+                    <img src={photoData} alt="Live biometric camera selfie preview for verification" className="absolute inset-0 w-full h-full object-cover" />
                   ) : (
                     <div className="flex flex-col items-center gap-2 text-gray-400 font-mono">
                       <Camera className="w-6 h-6" />
@@ -524,7 +524,7 @@ export default function AttendancePage() {
                   <h4 className="text-[10px] font-mono text-gray-450 uppercase mb-2">Selfie Verification</h4>
                   <div className="aspect-video w-full bg-gray-50 border border-border rounded-sm overflow-hidden relative">
                     {selectedLog.photo_url ? (
-                      <img src={selectedLog.photo_url} alt="Selfie Verification" className="w-full h-full object-cover" />
+                      <img src={selectedLog.photo_url} alt="Verified employee biometric attendance selfie record" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-[10px] font-mono text-gray-450">
                         IMAGE UNAVAILABLE

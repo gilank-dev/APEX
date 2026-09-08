@@ -1,0 +1,21 @@
+{
+  "name": "Apex — Enterprise Operations Control Node",
+  "short_name": "APEX",
+  "description": "Unified B2B multi-tenant telemetry node for workforce attendance, tasks, and inventory.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0C111D",
+  "theme_color": "#F97316",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "32x32",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

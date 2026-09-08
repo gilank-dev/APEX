@@ -4,6 +4,7 @@ import OfflineSyncProvider from '@/components/shared/OfflineSyncProvider'
 import Link from 'next/link'
 import SidebarLinks from '@/components/shared/SidebarLinks'
 import MobileNav from '@/components/shared/MobileNav'
+import Breadcrumbs from '@/components/shared/Breadcrumbs'
 
 export default async function TenantLayout({
   children,
@@ -100,7 +101,11 @@ export default async function TenantLayout({
             </div>
           </header>
 
-          <main className="flex-1 p-6 overflow-y-auto">{children}</main>
+          <div className="px-6 pt-3">
+            <Breadcrumbs items={[{ label: company.name || slug, href: `/${slug}/dashboard` }]} />
+          </div>
+
+          <main className="flex-1 p-6 pt-3 overflow-y-auto">{children}</main>
         </div>
       </div>
     </OfflineSyncProvider>

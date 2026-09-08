@@ -1,6 +1,19 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import SubscriptionLayout from '@/components/shared/SubscriptionLayout'
+import type { Metadata } from 'next'
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params
+  const formatted = slug.toUpperCase()
+  return {
+    title: `Subscription & Billing (${formatted})`,
+    description: `Manage workspace quotas, subscription tiers, and invoicing for ${slug}.`,
+    alternates: {
+      canonical: `/${slug}/billing`,
+    },
+  }
+}
 
 export default async function BillingPage({ params }: { params: Promise<{ slug: string }> }) {
   await params

@@ -2,42 +2,24 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function proxy(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  })
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({
-            request,
-          })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
-        },
-      },
-    }
-  )
-
   const pathname = request.nextUrl.pathname
   const pathParts = pathname.split('/').filter(Boolean)
 
   // Skip static assets and public landing page
   if (
     pathname.startsWith('/_next') ||
+    pathname.startsWith('/_not-found') ||
+    pathname.startsWith('/404') ||
     pathname.startsWith('/api') ||
-    pathname.startsWith('/favicon.ico') ||
+    pathname.startsWith('/favicon') ||
+    pathname.startsWith('/robots.txt') ||
+    pathname.startsWith('/sitemap.xml') ||
+    pathname.startsWith('/llms') ||
+    pathname.startsWith('/site.webmanifest') ||
+    pathname.startsWith('/opengraph-image') ||
     pathParts.length === 0
   ) {
-    return supabaseResponse
+    return NextResponse.next({ request })
   }
 
   // Blacklist checking - skip validation for these paths
@@ -56,8 +38,35 @@ export async function proxy(request: NextRequest) {
   ]
   const firstPart = pathParts[0]
   if (blacklist.includes(firstPart)) {
-    return supabaseResponse
+    return NextResponse.next({ request })
   }
+
+  let supabaseResponse = NextResponse.next({
+    request,
+  })
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder',
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          supabaseResponse = NextResponse.next({
+            request,
+          })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          )
+        },
+      },
+    }
+  )
+
+
 
   // Fetch authenticated user
   const { data: { user } } = await supabase.auth.getUser()
