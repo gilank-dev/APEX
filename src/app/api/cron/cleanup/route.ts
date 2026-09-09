@@ -30,10 +30,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
+    // Expire trials: when trial_ends_at < now() and tier still 'free', clear trial_ends_at (reverts to free features)
+    const nowIso = new Date().toISOString()
+    const { data: expiredTrials, error: trialError } = await adminClient
+      .from('companies')
+      .update({ trial_ends_at: null, updated_at: nowIso })
+      .eq('tier', 'free')
+      .lt('trial_ends_at', nowIso)
+      .select('id, slug, name')
+
+    if (trialError) {
+      return NextResponse.json({ error: trialError.message }, { status: 500 })
+    }
+
     return NextResponse.json({
       success: true,
-      message: 'Suspended companies clean up run successfully.',
+      message: 'Cleanup and trial expiration run successfully.',
       purged_companies: data,
+      expired_trials: expiredTrials,
     })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })

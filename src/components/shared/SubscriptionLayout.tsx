@@ -9,6 +9,7 @@ interface Company {
   slug: string
   name: string
   tier: string
+  trial_ends_at?: string | null
 }
 
 interface SubscriptionLayoutProps {

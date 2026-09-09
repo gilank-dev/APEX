@@ -3,6 +3,7 @@
 import { createAdminClient, createClient } from './supabase/server'
 import { cookies, headers } from 'next/headers'
 import { createRateLimiter } from './security'
+import { effectiveTier, getMaxAllowedEmployees } from './entitlements'
 
 // Best-effort in-memory rate limiter for serverless environment. Upgrade path: Upstash Redis.
 const joinRateLimiter = createRateLimiter({
@@ -73,6 +74,8 @@ export async function registerTenantAction(prevState: any, formData: FormData) {
 
   const userId = authData.user.id
 
+  const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
+
   // Insert Company
   const { data: company, error: companyError } = await adminClient
     .from('companies')
@@ -82,6 +85,7 @@ export async function registerTenantAction(prevState: any, formData: FormData) {
       category,
       tier: 'free',
       active_modules: ['attendance', 'tasks'],
+      trial_ends_at: trialEndsAt,
     })
     .select()
     .single()
@@ -213,7 +217,8 @@ export async function joinEmployeeAction(prevState: any, formData: FormData) {
   const companiesData = role.companies as any
   const companySlug = companiesData.slug
   const companyId = role.company_id
-  const companyTier = companiesData.tier || 'free'
+  const tier = effectiveTier(companiesData)
+  const maxAllowed = getMaxAllowedEmployees(companiesData)
 
   // Count current workspace members
   const { count: currentMemberCount } = await adminClient
@@ -221,10 +226,8 @@ export async function joinEmployeeAction(prevState: any, formData: FormData) {
     .select('*', { count: 'exact', head: true })
     .eq('company_id', companyId)
 
-  const maxAllowed = companyTier === 'free' ? 15 : companyTier === 'pro' ? 100 : Infinity
-
   if ((currentMemberCount || 0) >= maxAllowed) {
-    return { error: `Batas kuota karyawan untuk tingkat ${companyTier.toUpperCase()} (${maxAllowed} orang) telah tercapai. Silakan lakukan peningkatan paket langganan.` }
+    return { error: `Batas kuota karyawan untuk tingkat ${tier.toUpperCase()} (${maxAllowed} orang) telah tercapai. Silakan lakukan peningkatan paket langganan.` }
   }
 
   // 2. Generate pseudo-email

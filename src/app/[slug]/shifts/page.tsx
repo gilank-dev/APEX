@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import ShiftsClient, { ShiftTemplate, ShiftAssignment, Employee } from './ShiftsClient'
+import { isProOrHigher } from '@/lib/entitlements'
 
 interface ShiftsPageProps {
   params: Promise<{ slug: string }>
@@ -51,8 +52,7 @@ export default async function ShiftsPage({ params }: ShiftsPageProps) {
   const isAdminOrManager = !!role.is_admin || role.name === 'Manager'
 
   // Entitlement / Pro tier check (free tier is gated unless trial is active)
-  const isTrialActive = company.trial_ends_at && new Date(company.trial_ends_at) > new Date()
-  const isProOrTrial = company.tier === 'pro' || company.tier === 'enterprise' || !!isTrialActive
+  const isProOrTrial = isProOrHigher(company)
 
   // Fetch shift templates
   let { data: templates } = await supabase

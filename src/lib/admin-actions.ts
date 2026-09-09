@@ -2,6 +2,7 @@
 
 import { createAdminClient } from './supabase/server'
 import { revalidatePath } from 'next/cache'
+import { effectiveTier, getMaxAllowedEmployees } from './entitlements'
 
 export async function updateModulesAction(companyId: string, slug: string, modules: string[]) {
   const adminClient = createAdminClient()
@@ -43,11 +44,11 @@ export async function createDummyAccountAction(companyId: string, companySlug: s
     .select('*', { count: 'exact', head: true })
     .eq('company_id', companyId)
 
-  const companyTier = company.tier || 'free'
-  const maxAllowed = companyTier === 'free' ? 15 : companyTier === 'pro' ? 100 : Infinity
+  const tier = effectiveTier(company)
+  const maxAllowed = getMaxAllowedEmployees(company)
 
   if ((currentMemberCount || 0) >= maxAllowed) {
-    return { error: `Batas kuota karyawan untuk tingkat ${companyTier.toUpperCase()} (${maxAllowed} orang) telah tercapai. Silakan lakukan peningkatan paket langganan.` }
+    return { error: `Batas kuota karyawan untuk tingkat ${tier.toUpperCase()} (${maxAllowed} orang) telah tercapai. Silakan lakukan peningkatan paket langganan.` }
   }
 
   // 2. Get the specified role for the company

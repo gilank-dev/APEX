@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import PayrollClient from './PayrollClient'
 import { EmployeePayrollSetting } from '@/lib/payroll'
 import { EmployeeSummary, AttendanceLogSummary, ShiftAssignmentSummary } from '@/lib/attendance-recap'
+import { isProOrHigher } from '@/lib/entitlements'
 
 interface PayrollPageProps {
   params: Promise<{ slug: string }>
@@ -37,8 +38,7 @@ export default async function PayrollPage({ params }: PayrollPageProps) {
   const isAdminOrManager = !!role.is_admin || role.name === 'Manager'
 
   // Entitlement / Pro tier check
-  const isTrialActive = company.trial_ends_at && new Date(company.trial_ends_at) > new Date()
-  const isProOrTrial = company.tier === 'pro' || company.tier === 'enterprise' || !!isTrialActive
+  const isProOrTrial = isProOrHigher(company)
 
   // 1. Fetch employees
   let employeesQuery = supabase

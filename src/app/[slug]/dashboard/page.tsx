@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { effectiveTier, isTrialActive, formatTrialDate } from '@/lib/entitlements'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
@@ -145,7 +146,21 @@ export default async function DashboardPage({ params }: { params: Promise<{ slug
   return (
     <div className="space-y-6 dashboard-container">
       {/* Banner Tier */}
-      {company.tier === 'free' && (
+      {isTrialActive(company) && (
+        <div className="p-4 bg-orange-50/80 border border-primary/20 rounded-lg text-xs font-mono text-primary flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 select-none">
+          <div>
+            <span className="font-bold">TRIAL PRO AKTIF:</span> Berlaku s.d. {formatTrialDate(company.trial_ends_at)}. Kuota hingga 100 karyawan & seluruh modul Pro terbuka.
+          </div>
+          <Link
+            href={`/${slug}/billing`}
+            className="text-white bg-primary hover:bg-primary-hover text-[11px] font-bold px-4 py-1.5 rounded-md transition-colors uppercase"
+          >
+            Upgrade Langganan
+          </Link>
+        </div>
+      )}
+
+      {effectiveTier(company) === 'free' && (
         <div className="p-4 bg-primary/5 border border-primary/15 rounded-lg text-xs font-mono text-primary flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 select-none">
           <div>
             <span className="font-bold">FREE PLAN ACTIVE:</span> Maximum limit of 15 users.
