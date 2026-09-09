@@ -2,6 +2,7 @@
 
 import { createAdminClient } from './supabase/server'
 import { revalidatePath } from 'next/cache'
+import { requireManager } from '@/lib/authz'
 
 export interface PayrollSettingInput {
   user_id: string
@@ -16,13 +17,33 @@ export async function saveBulkPayrollSettingsAction(
   slug: string,
   settings: PayrollSettingInput[]
 ) {
+  const authz = await requireManager(companyId)
+  if (!authz.ok) return { error: authz.error }
+
   if (!settings || settings.length === 0) {
     return { success: true }
   }
 
   const adminClient = createAdminClient()
 
-  const payload = settings.map((s) => ({
+  // Validate that user_id values belong to this company
+  const { data: members, error: memberError } = await adminClient
+    .from('users')
+    .select('id')
+    .eq('company_id', companyId)
+
+  if (memberError || !members) {
+    return { error: 'Gagal memvalidasi anggota tim.' }
+  }
+
+  const validMemberIds = new Set(members.map((m) => m.id))
+  const filteredSettings = settings.filter((s) => validMemberIds.has(s.user_id))
+
+  if (filteredSettings.length === 0) {
+    return { success: true }
+  }
+
+  const payload = filteredSettings.map((s) => ({
     company_id: companyId,
     user_id: s.user_id,
     base_salary: Math.max(0, Number(s.base_salary) || 0),

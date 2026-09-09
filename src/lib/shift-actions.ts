@@ -2,6 +2,7 @@
 
 import { createAdminClient, createClient } from './supabase/server'
 import { revalidatePath } from 'next/cache'
+import { requireManager } from '@/lib/authz'
 
 export interface ShiftTemplateInput {
   name: string
@@ -22,6 +23,9 @@ function isOvernightShift(startTime: string, endTime: string): boolean {
 
 // Seed default shift templates: Pagi 07:00-15:00, Siang 15:00-23:00, Malam 23:00-07:00
 export async function seedDefaultShiftTemplatesAction(companyId: string, slug: string) {
+  const authz = await requireManager(companyId)
+  if (!authz.ok) return { error: authz.error }
+
   const adminClient = createAdminClient()
 
   // Check if templates already exist
@@ -80,6 +84,9 @@ export async function createShiftTemplateAction(
   slug: string,
   data: ShiftTemplateInput
 ) {
+  const authz = await requireManager(companyId)
+  if (!authz.ok) return { error: authz.error }
+
   if (!data.name || !data.start_time || !data.end_time) {
     return { error: 'Nama, jam mulai, dan jam selesai wajib diisi.' }
   }
@@ -113,6 +120,9 @@ export async function updateShiftTemplateAction(
   slug: string,
   data: ShiftTemplateInput
 ) {
+  const authz = await requireManager(companyId)
+  if (!authz.ok) return { error: authz.error }
+
   if (!data.name || !data.start_time || !data.end_time) {
     return { error: 'Nama, jam mulai, dan jam selesai wajib diisi.' }
   }
@@ -144,6 +154,9 @@ export async function deleteShiftTemplateAction(
   companyId: string,
   slug: string
 ) {
+  const authz = await requireManager(companyId)
+  if (!authz.ok) return { error: authz.error }
+
   const adminClient = createAdminClient()
 
   const { error } = await adminClient
@@ -166,15 +179,35 @@ export async function saveWeeklyRosterAction(
   slug: string,
   assignments: ShiftAssignmentInput[]
 ) {
+  const authz = await requireManager(companyId)
+  if (!authz.ok) return { error: authz.error }
+
   if (!assignments || assignments.length === 0) {
     return { success: true }
   }
 
   const adminClient = createAdminClient()
 
+  // Fetch valid members of the company
+  const { data: members, error: memberError } = await adminClient
+    .from('users')
+    .select('id')
+    .eq('company_id', companyId)
+
+  if (memberError || !members) {
+    return { error: 'Gagal memvalidasi anggota tim.' }
+  }
+
+  const validMemberIds = new Set(members.map((m) => m.id))
+  const filteredAssignments = assignments.filter((a) => validMemberIds.has(a.user_id))
+
+  if (filteredAssignments.length === 0) {
+    return { success: true }
+  }
+
   // Split into deletes (OFF) and upserts
-  const toDelete = assignments.filter((a) => !a.shift_template_id)
-  const toUpsert = assignments.filter((a) => !!a.shift_template_id)
+  const toDelete = filteredAssignments.filter((a) => !a.shift_template_id)
+  const toUpsert = filteredAssignments.filter((a) => !!a.shift_template_id)
 
   // Handle removals
   for (const del of toDelete) {

@@ -3,8 +3,12 @@
 import { createAdminClient } from './supabase/server'
 import { revalidatePath } from 'next/cache'
 import { effectiveTier, getMaxAllowedEmployees } from './entitlements'
+import { getCallerProfile, requireManager } from '@/lib/authz'
 
 export async function updateModulesAction(companyId: string, slug: string, modules: string[]) {
+  const authz = await requireManager(companyId)
+  if (!authz.ok) return { error: authz.error }
+
   const adminClient = createAdminClient()
 
   const { error } = await adminClient
@@ -21,6 +25,9 @@ export async function updateModulesAction(companyId: string, slug: string, modul
 }
 
 export async function createDummyAccountAction(companyId: string, companySlug: string, fullName: string, roleName: string = 'Employee') {
+  const authz = await requireManager(companyId)
+  if (!authz.ok) return { error: authz.error }
+
   if (!fullName) {
     return { error: 'Full name is required.' }
   }
@@ -103,10 +110,42 @@ export async function createDummyAccountAction(companyId: string, companySlug: s
 }
 
 export async function resetDummyPasswordAction(userId: string, companySlug: string, newPassword?: string) {
+  const profile = await getCallerProfile()
+  if (!profile) {
+    return { error: 'Tidak terautentikasi.' }
+  }
+  if (!profile.is_admin && profile.role_name !== 'Admin') {
+    return { error: 'Akses ditolak.' }
+  }
+
   const adminClient = createAdminClient()
+
+  let { data: target } = await adminClient
+    .from('users')
+    .select('company_id, auth_id')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (!target) {
+    const { data: targetByAuth } = await adminClient
+      .from('users')
+      .select('company_id, auth_id')
+      .eq('auth_id', userId)
+      .maybeSingle()
+    target = targetByAuth
+  }
+
+  if (!target) {
+    return { error: 'Pengguna tidak ditemukan.' }
+  }
+
+  if (profile.company_id !== target.company_id) {
+    return { error: 'Akses ditolak.' }
+  }
+
   const password = newPassword || Math.random().toString(36).substring(2, 10)
 
-  const { error } = await adminClient.auth.admin.updateUserById(userId, {
+  const { error } = await adminClient.auth.admin.updateUserById(target.auth_id || userId, {
     password,
   })
 
@@ -119,6 +158,14 @@ export async function resetDummyPasswordAction(userId: string, companySlug: stri
 }
 
 export async function regenerateInviteCodeAction(roleId: string, companySlug: string) {
+  const profile = await getCallerProfile()
+  if (!profile) {
+    return { error: 'Tidak terautentikasi.' }
+  }
+  if (!profile.is_admin && !['Admin', 'Manager'].includes(profile.role_name)) {
+    return { error: 'Akses ditolak.' }
+  }
+
   if (!roleId || !companySlug) {
     return { error: 'Role ID and company slug are required.' }
   }
@@ -127,12 +174,16 @@ export async function regenerateInviteCodeAction(roleId: string, companySlug: st
 
   const { data: role, error: roleError } = await adminClient
     .from('roles')
-    .select('name')
+    .select('company_id, name')
     .eq('id', roleId)
-    .single()
+    .maybeSingle()
 
   if (roleError || !role) {
-    return { error: 'Role not found.' }
+    return { error: 'Role tidak ditemukan.' }
+  }
+
+  if (profile.company_id !== role.company_id) {
+    return { error: 'Akses ditolak.' }
   }
 
   const prefix = role.name.toLowerCase().includes('admin') ? 'AD-' : 'EM-'
