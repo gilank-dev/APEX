@@ -23,9 +23,10 @@ export default async function SuperAdminDashboardPage() {
     redirect('/login')
   }
 
-  // 2. Strict Super Admin authorization check (both email and metadata role required)
+  // 2. Strict Super Admin authorization check (both email and app_metadata role required;
+  //    app_metadata is not client-writable, unlike user_metadata)
   const superAdminEmail = process.env.SUPER_ADMIN_EMAIL || 'super-lankdev@apex.internal'
-  const isSuperAdmin = user.email === superAdminEmail && user.user_metadata?.role === 'super-admin'
+  const isSuperAdmin = user.email === superAdminEmail && user.app_metadata?.role === 'super-admin'
   if (!isSuperAdmin) {
     const slug = user.user_metadata?.company_slug || ''
     redirect(slug ? `/${slug}/dashboard` : '/login')

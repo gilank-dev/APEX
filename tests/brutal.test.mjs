@@ -280,10 +280,11 @@ describe('APEX Brutal Security Test Suite', () => {
     it('ensures src/app/super-admin/page.tsx uses && for the two super-admin authorization conditions', () => {
       const pageFile = fs.readFileSync(path.join(rootDir, 'src/app/super-admin/page.tsx'), 'utf8')
 
-      // Assert the hardened line requiring BOTH email and role exists
+      // Assert the hardened line requiring BOTH email and role exists.
+      // app_metadata is admin-only writable — user_metadata is client-spoofable.
       assert.ok(
-        pageFile.includes("user.email === superAdminEmail && user.user_metadata?.role === 'super-admin'"),
-        'Super admin page must use && to require BOTH email and role'
+        pageFile.includes("user.email === superAdminEmail && user.app_metadata?.role === 'super-admin'"),
+        'Super admin page must use && to require BOTH email and role (app_metadata)'
       )
 
       // Ensure the old insecure bypass does not exist
@@ -291,6 +292,11 @@ describe('APEX Brutal Security Test Suite', () => {
         pageFile.includes("user.email !== superAdminEmail && user.user_metadata?.role !== 'super-admin'"),
         false,
         'Old vulnerable condition must be removed'
+      )
+      assert.strictEqual(
+        pageFile.includes("user.email === superAdminEmail && user.user_metadata?.role === 'super-admin'"),
+        false,
+        'Client-spoofable user_metadata check must be removed'
       )
     })
 
@@ -308,14 +314,20 @@ describe('APEX Brutal Security Test Suite', () => {
       )
     })
 
-    it('ensures newest supabase migration contains WITH CHECK for modify_own_user and tier lock', () => {
+    it('ensures migrations harden modify_own_user with WITH CHECK and company pinning', () => {
       const migrationsDir = path.join(rootDir, 'supabase/migrations')
       const files = fs.readdirSync(migrationsDir).sort()
-      const newestMigration = files.find((f) => f === '20260708000001_rls_hardening.sql') || files[files.length - 1]
+      // The newest migration that redefines modify_own_user is authoritative
+      const latestDefiner = [...files]
+        .reverse()
+        .find((f) => {
+          const content = fs.readFileSync(path.join(migrationsDir, f), 'utf8')
+          return content.includes('modify_own_user')
+        })
 
-      assert.strictEqual(newestMigration, '20260708000001_rls_hardening.sql')
+      assert.ok(latestDefiner, 'No migration defines modify_own_user')
       const migrationContent = fs.readFileSync(
-        path.join(migrationsDir, newestMigration),
+        path.join(migrationsDir, latestDefiner),
         'utf8'
       )
 
@@ -328,7 +340,19 @@ describe('APEX Brutal Security Test Suite', () => {
         'Migration must contain WITH CHECK clause'
       )
       assert.ok(
-        migrationContent.includes('update_company') && migrationContent.includes('tier'),
+        migrationContent.includes('company_id = public.get_company_id()'),
+        'modify_own_user must pin company_id (cross-tenant move guard)'
+      )
+
+      // Tier lock lives in the latest migration that redefines update_company
+      const tierDefiner = [...files].reverse().find((f) => {
+        const content = fs.readFileSync(path.join(migrationsDir, f), 'utf8')
+        return content.includes('update_company')
+      })
+      assert.ok(tierDefiner, 'No migration defines update_company')
+      const tierContent = fs.readFileSync(path.join(migrationsDir, tierDefiner), 'utf8')
+      assert.ok(
+        tierContent.includes('update_company') && tierContent.includes('tier'),
         'Migration must contain tier lock on update_company'
       )
     })

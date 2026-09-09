@@ -13,7 +13,8 @@ export async function updateCompanyTierAction(companyId: string, tier: 'free' | 
   const { data: { user }, error: userError } = await client.auth.getUser()
   const superAdminEmail = process.env.SUPER_ADMIN_EMAIL || 'super-lankdev@apex.internal'
 
-  if (userError || !user || user.email !== superAdminEmail || user.user_metadata?.role !== 'super-admin') {
+  // app_metadata is admin-only writable via the Admin API; clients cannot spoof the role.
+  if (userError || !user || user.email !== superAdminEmail || user.app_metadata?.role !== 'super-admin') {
     return { error: 'Unauthorized: Access restricted to super admin.' }
   }
 

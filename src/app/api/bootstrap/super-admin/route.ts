@@ -49,8 +49,11 @@ export async function POST() {
     email,
     password,
     email_confirm: true,
-    user_metadata: {
+    // app_metadata is admin-only writable; users cannot self-assign the super-admin role
+    app_metadata: {
       role: 'super-admin',
+    },
+    user_metadata: {
       company_slug: 'super-admin',
     },
   })

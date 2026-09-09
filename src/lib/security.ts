@@ -31,10 +31,14 @@ export function generateRequestCode(slug: string): string {
 
   const cleanPrefix = (normalized.padEnd(4, 'X')).slice(0, 4)
 
-  const randomBytes = crypto.randomBytes(6)
+  // Rejection sampling: 256 % 36 != 0, so plain modulo biases toward the first
+  // 4 characters. Redraw any byte >= 252 (the largest multiple of 36) instead.
   let randomPart = ''
-  for (let i = 0; i < 6; i++) {
-    randomPart += ALPHANUMERIC_CHARS[randomBytes[i] % ALPHANUMERIC_CHARS.length]
+  while (randomPart.length < 6) {
+    const buf = crypto.randomBytes(1)
+    if (buf[0] < 252) {
+      randomPart += ALPHANUMERIC_CHARS[buf[0] % 36]
+    }
   }
 
   return `APX-${cleanPrefix}-${randomPart}`
