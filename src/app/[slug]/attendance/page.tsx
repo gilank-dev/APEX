@@ -311,8 +311,7 @@ export default function AttendancePage() {
         addToQueue({ type: 'clock_out', payload })
         alert('Clock out request queued offline!')
       } else {
-        // Guard: only close a session that is still open (prevents overwriting
-        // an earlier clock-out, e.g. replayed or delayed requests)
+        // Only close a session that is still open; trigger enforces append-only
         const { data: updated, error } = await supabase
           .from('attendance_logs')
           .update({
@@ -321,8 +320,13 @@ export default function AttendancePage() {
           .eq('id', activeLog.id)
           .is('clock_out_time', null)
           .select('id')
-        if (error) throw error
-        if (!updated || updated.length === 0) {
+        if (error) {
+          if (error.code === 'P0001') {
+            alert('Sesi absensi ini sudah ditutup sebelumnya.')
+          } else {
+            throw error
+          }
+        } else if (!updated || updated.length === 0) {
           alert('Sesi absensi ini sudah ditutup sebelumnya.')
         }
       }
