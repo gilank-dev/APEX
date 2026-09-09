@@ -30,4 +30,20 @@ Done tasks live here. The newest entry is the current source of truth.
 - [x] `npx tsc --noEmit` — clean
 - [x] `npm test` — 30/30
 - [x] `npm run build` — clean
-- [ ] Live smoke test post-deploy (login/register on apex.lankdev.my.id, /shifts /payroll render) — do after push
+- [x] Live smoke test post-deploy (login/register on apex.lankdev.my.id, /shifts /payroll render) — do after push
+
+## 2026-09-09 (later) — Role/RLS audit round 2 + infra completion
+
+**Closed holes** (commit 69e566c + 75c7fca):
+- `select_roles` RLS: dropped `OR auth.role() = 'anon'` — strangers could enumerate every tenant's invite_code and join any company. Verified closed: anon `GET /roles` returns `[]`.
+- `modify_own_user` RLS: now pins `company_id` — previously an employee could move their own profile into another tenant (takeover via get_company_id()). Verified: cross-tenant PATCH returns 403, harmless self-update still 204.
+- `users` table: client INSERT/DELETE denied via API (service role only). Verified 403.
+- Super-admin gate (page + updateCompanyTierAction + bootstrap): `user_metadata.role` → `app_metadata.role`. user_metadata is client-writable via updateUser() with the anon key; app_metadata is admin-API-only.
+- `generateRequestCode`: modulo bias removed via rejection sampling (36-char alphabet, bytes ≥ 252 redrawn).
+
+**Infra completed**:
+- Vercel prod env now set: SUPER_ADMIN_EMAIL/PASSWORD (generated, stored in %LOCALAPPDATA%/Temp/apex_superadmin.txt), CRON_SECRET, WHATSAPP_WEBHOOK_SECRET, NEXT_PUBLIC_SITE_URL.
+- Super-admin bootstrapped via POST /api/bootstrap/super-admin → 201 (user d78000a7-ce45-4949-a716-23be3dd16291).
+- vercel.json cron: /api/cron/cleanup daily 17:00 UTC (00:00 WIB) — trial expiry + suspended-company purge.
+
+**Incident note**: `git add -A` briefly committed `.hermes-check/` + `supabase/.temp/` to the public repo (commit 69e566c). Removed in 75c7fca + gitignored. Content audit: all credential files were EMPTY (0 bytes) due to an MSYS path quirk; pooler-url contains hostname only, no password. No secret material leaked. Keep `.hermes-check/` and `supabase/.temp/` out of commits.
