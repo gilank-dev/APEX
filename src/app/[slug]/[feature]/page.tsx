@@ -468,6 +468,14 @@ export default function DynamicFeaturePage() {
         </Link>
       </div>
 
+      {/* Simulation Notice Banner */}
+      <div className="bg-amber-50 border border-amber-300 text-amber-900 rounded-lg p-3.5 flex items-center gap-3 shadow-xs">
+        <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
+        <p className="text-xs sm:text-sm font-semibold tracking-wide">
+          SIMULASI — angka contoh, bukan data nyata
+        </p>
+      </div>
+
       {/* Feature Header */}
       <div className="border-b border-border pb-6">
         <h1 className="text-2xl font-bold tracking-tight text-foreground font-sans uppercase">

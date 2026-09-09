@@ -6,6 +6,7 @@ import {
   updateModulesAction,
   createDummyAccountAction,
   resetDummyPasswordAction,
+  regenerateInviteCodeAction,
 } from '@/lib/admin-actions'
 import { useAppStore } from '@/lib/store'
 import { CATEGORY_FEATURES } from '@/lib/features'
@@ -152,6 +153,22 @@ export default function AdminPage() {
     })
   }
 
+  const handleRegenerateCode = async (roleId: string) => {
+    if (!company) return
+    if (!confirm('Buat ulang kode undangan ini? Kode lama tidak akan berlaku lagi.')) return
+    setError(null)
+
+    startTransition(async () => {
+      const res = await regenerateInviteCodeAction(roleId, company.slug)
+      if (res?.error) {
+        setError(res.error)
+      } else {
+        alert('Kode undangan berhasil diperbarui!')
+        fetchAdminData()
+      }
+    })
+  }
+
   if (loading && !company) {
     return <SkeletonLoader type="admin" />
   }
@@ -263,15 +280,25 @@ export default function AdminPage() {
                   <span className="text-[11px] text-gray-500 uppercase">{role.name} ROLE</span>
                   <div className="flex justify-between items-center mt-1">
                     <span className="text-sm font-bold text-foreground tracking-widest">{role.invite_code}</span>
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(role.invite_code)
-                        alert('Invitation code copied!')
-                      }}
-                      className="text-xs text-primary hover:underline cursor-pointer"
-                    >
-                      [Copy]
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(role.invite_code)
+                          alert('Invitation code copied!')
+                        }}
+                        className="text-xs text-primary hover:underline cursor-pointer"
+                      >
+                        [Copy]
+                      </button>
+                      <button
+                        onClick={() => handleRegenerateCode(role.id)}
+                        disabled={isPending}
+                        className="text-xs text-amber-600 hover:underline cursor-pointer disabled:opacity-50"
+                        title="Generate Ulang Kode"
+                      >
+                        [Generate Ulang Kode]
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}

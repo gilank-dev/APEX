@@ -39,6 +39,15 @@ export async function registerTenantAction(prevState: any, formData: FormData) {
     return { error: 'All fields are required.' }
   }
 
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(email.trim())) {
+    return { error: 'Format email tidak valid.' }
+  }
+
+  if (password.length < 8) {
+    return { error: 'Password minimal 8 karakter.' }
+  }
+
   if (BLACKLIST.includes(slug)) {
     return { error: 'This company slug is reserved.' }
   }

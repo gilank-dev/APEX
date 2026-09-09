@@ -117,3 +117,37 @@ export async function resetDummyPasswordAction(userId: string, companySlug: stri
   revalidatePath(`/${companySlug}/admin`)
   return { success: true, password }
 }
+
+export async function regenerateInviteCodeAction(roleId: string, companySlug: string) {
+  if (!roleId || !companySlug) {
+    return { error: 'Role ID and company slug are required.' }
+  }
+
+  const adminClient = createAdminClient()
+
+  const { data: role, error: roleError } = await adminClient
+    .from('roles')
+    .select('name')
+    .eq('id', roleId)
+    .single()
+
+  if (roleError || !role) {
+    return { error: 'Role not found.' }
+  }
+
+  const prefix = role.name.toLowerCase().includes('admin') ? 'AD-' : 'EM-'
+  const newInviteCode = prefix + Math.random().toString(36).substring(2, 8).toUpperCase()
+
+  const { error: updateError } = await adminClient
+    .from('roles')
+    .update({ invite_code: newInviteCode })
+    .eq('id', roleId)
+
+  if (updateError) {
+    return { error: 'Failed to update invite code: ' + updateError.message }
+  }
+
+  revalidatePath(`/${companySlug}/admin`)
+  return { success: true, newInviteCode }
+}
+
