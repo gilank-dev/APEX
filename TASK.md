@@ -36,3 +36,16 @@ Done tasks live here. The newest entry is the current source of truth.
 **Demo data**: tenant `reina-e2e` (module leave enabled), Admin qa-e2e@lankdev.my.id / QaProbe12345x.
 
 **Parked (product decisions, not bugs)**: THR+lembur (P1, Q1 2027), kasbon (P2, 5 customers), UI polish (after pilot feedback).
+
+## 2026-09-09 (evening) — Deep security + behavior + UX pass
+
+**Bugs found & fixed (all verified live against prod DB)**:
+
+1. *Selfie PII leak*: storage bucket never existed → uploads always failed → full base64 selfies (~100KB+) silently stored in `attendance_logs.photo_url`. Fixed: private `attendance` bucket (migration 07) + company-scoped storage RLS + path-based storage + signed-URL viewer (5 min TTL).
+2. *Double clock-in*: no constraint on open sessions; overnight (UTC-midnight) query boundary dropped active sessions. Fixed: partial unique index (one open session per user) + active-session query no longer time-bounded. Verified: second clock-in 409.
+3. *Clock-out tamper (CRITICAL)*: anyone with the anon key could PATCH their log's clock-out to any time, repeatedly. Fixed at DB level: trigger makes user_id/company_id/clock_in_time immutable and clock_out_time append-only (migration 08). Verified: replay 400 P0001, rewrite 400 P0001.
+4. *Offline queue replay corruption*: sync used blind `upsert` → stale offline clock-out overwrote newer online data; base64 photos synced into DB. Fixed: clock-in inserts (uploads photo to storage first, 23505 treated as synced), clock-out closes only still-open sessions.
+5. *Race on approvals*: double-click decide could double-apply. Fixed: `.eq('status','pending')` guards on leave/swap decide + cancel, terminal-state WITH CHECK in RLS.
+6. *Swap cancel was broken*: RLS only allowed target/manager to update — requester cancel always failed. Fixed: dedicated `cancel_swap_request_own` policy.
+7. *Auth spam*: no rate limits on login/register; register used signUp (no email confirm → auto sign-in dead-end); invite codes from Math.random. Fixed: login 10/10min per IP+email, register 5/h per IP, admin createUser instant confirm, crypto rejection-sampled codes, slug blacklist += super-admin, pricing.
+8. UX: unique-violation and P0001 errors now show clear Indonesian messages; selfie upload failure blocks with a retry message instead of silently degrading.
