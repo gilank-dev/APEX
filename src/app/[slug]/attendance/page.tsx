@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useAppStore } from '@/lib/store'
 import imageCompression from 'browser-image-compression'
 import SkeletonLoader from '@/components/shared/SkeletonLoader'
 import { Camera, Clock, User, CheckCircle2, ShieldCheck, X } from 'lucide-react'
+import AttendanceRecapView from './AttendanceRecapView'
 
 interface UserProfile {
   id: string
@@ -30,10 +32,14 @@ interface AttendanceLog {
 }
 
 export default function AttendancePage() {
+  const params = useParams()
+  const slug = (params?.slug as string) || ''
   const supabase = createClient()
   const { isOffline, addToQueue } = useAppStore()
 
+  const [viewMode, setViewMode] = useState<'daily' | 'recap'>('daily')
   const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [employees, setEmployees] = useState<{ id: string; full_name: string }[]>([])
   const [logs, setLogs] = useState<AttendanceLog[]>([])
   const [shiftMap, setShiftMap] = useState<Record<string, string>>({})
   const [activeLog, setActiveLog] = useState<AttendanceLog | null>(null)
@@ -113,6 +119,15 @@ export default function AttendancePage() {
           })
           setShiftMap(map)
         }
+
+        // Fetch company employees for monthly recap
+        const { data: empList } = await supabase
+          .from('users')
+          .select('id, full_name, email')
+          .eq('company_id', uProfile.company_id)
+          .order('full_name', { ascending: true })
+
+        if (empList) setEmployees(empList as any[])
       }
     } catch (err) {
       console.error(err)
@@ -283,11 +298,53 @@ export default function AttendancePage() {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto px-4">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground font-sans uppercase">Employee Attendance</h1>
-        <p className="text-xs text-gray-500 font-mono mt-1">ATTENDANCE LOG WITH FACE SELFIE VERIFICATION</p>
+      {/* Page Header & View Toggle */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground font-sans uppercase">
+            Employee Attendance
+          </h1>
+          <p className="text-xs text-gray-500 font-mono mt-1">
+            ATTENDANCE LOG WITH FACE SELFIE VERIFICATION & MONTHLY RECAP
+          </p>
+        </div>
+
+        {/* View Toggle */}
+        <div className="flex items-center gap-2 bg-surface p-1 border border-border rounded-lg">
+          <button
+            onClick={() => setViewMode('daily')}
+            className={`px-4 py-1.5 text-xs font-mono uppercase rounded-md transition-all cursor-pointer ${
+              viewMode === 'daily'
+                ? 'bg-primary text-white font-bold shadow-sm'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+            }`}
+          >
+            Presensi Harian
+          </button>
+          <button
+            onClick={() => setViewMode('recap')}
+            className={`px-4 py-1.5 text-xs font-mono uppercase rounded-md transition-all cursor-pointer ${
+              viewMode === 'recap'
+                ? 'bg-primary text-white font-bold shadow-sm'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+            }`}
+          >
+            Rekap Bulanan
+          </button>
+        </div>
       </div>
+
+      {viewMode === 'recap' ? (
+        profile && (
+          <AttendanceRecapView
+            companyId={profile.company_id}
+            slug={slug}
+            employees={employees}
+            isAdminOrManager={!!profile.roles?.is_admin || profile.roles?.name === 'Manager'}
+          />
+        )
+      ) : (
+        <>
 
       {/* Attendance Chart Section */}
       <div className="liquid-glass p-5 rounded-lg border border-border">
@@ -638,6 +695,8 @@ export default function AttendancePage() {
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   )
