@@ -4,11 +4,22 @@ import { createAdminClient, createClient } from './supabase/server'
 import { cookies, headers } from 'next/headers'
 import { createRateLimiter } from './security'
 import { effectiveTier, getMaxAllowedEmployees } from './entitlements'
+import crypto from 'node:crypto'
 
 // Best-effort in-memory rate limiter for serverless environment. Upgrade path: Upstash Redis.
 const joinRateLimiter = createRateLimiter({
   maxAttempts: 10,
   windowMs: 10 * 60 * 1000,
+})
+
+const loginRateLimiter = createRateLimiter({
+  maxAttempts: 10,
+  windowMs: 10 * 60 * 1000,
+})
+
+const registerRateLimiter = createRateLimiter({
+  maxAttempts: 5,
+  windowMs: 60 * 60 * 1000,
 })
 
 // Slug blacklist check
@@ -25,6 +36,8 @@ const BLACKLIST = [
   'public',
   '_next',
   'favicon.ico',
+  'super-admin',
+  'pricing',
 ]
 
 export async function registerTenantAction(prevState: any, formData: FormData) {
@@ -34,6 +47,18 @@ export async function registerTenantAction(prevState: any, formData: FormData) {
   const adminName = formData.get('adminName') as string
   const email = formData.get('email') as string
   const password = formData.get('password') as string
+
+  // Rate limit per IP: 5 registrations / hour (tenant-creation spam guard)
+  let ip = 'unknown'
+  try {
+    const headerList = await headers()
+    ip = headerList.get('x-forwarded-for')?.split(',')[0].trim() || headerList.get('x-real-ip') || 'unknown'
+  } catch {
+    ip = 'unknown'
+  }
+  if (!registerRateLimiter.check(`reg:${ip}`).allowed) {
+    return { error: 'Terlalu banyak percobaan registrasi. Coba lagi dalam satu jam.' }
+  }
 
   if (!companyName || !category || !slug || !adminName || !email || !password) {
     return { error: 'All fields are required.' }
@@ -65,15 +90,15 @@ export async function registerTenantAction(prevState: any, formData: FormData) {
     return { error: 'This company slug is already registered.' }
   }
 
-  // Create Auth User
-  const { data: authData, error: authError } = await adminClient.auth.signUp({
+  // Create Auth User (admin API: email confirmed immediately so the auto
+  // sign-in below cannot dead-end on an unverified account)
+  const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
     email,
     password,
-    options: {
-      data: {
-        company_slug: slug,
-        role: 'Admin',
-      },
+    email_confirm: true,
+    user_metadata: {
+      company_slug: slug,
+      role: 'Admin',
     },
   })
 
@@ -105,9 +130,19 @@ export async function registerTenantAction(prevState: any, formData: FormData) {
     return { error: 'Failed to create company data.' }
   }
 
-  // Generate unique invite codes
-  const adminInvite = 'AD-' + Math.random().toString(36).substring(2, 8).toUpperCase()
-  const empInvite = 'EM-' + Math.random().toString(36).substring(2, 8).toUpperCase()
+  // Generate unique invite codes (crypto-random, rejection-sampled)
+  const codeChars = '0123456789ABCDEFGHJKLMNPQRSTUVWXYZ'
+  const randomCode = (prefix: string) => {
+    let code = prefix
+    while (code.length < prefix.length + 6) {
+      const b = crypto.randomBytes(1)[0]
+      // 249 = largest multiple of 34 (alphabet size) — avoids modulo bias
+      if (b < 249) code += codeChars[b % 34]
+    }
+    return code
+  }
+  const adminInvite = randomCode('AD-')
+  const empInvite = randomCode('EM-')
 
   // Insert Roles
   const { data: roles, error: rolesError } = await adminClient
@@ -167,6 +202,20 @@ export async function loginAdminAction(prevState: any, formData: FormData) {
   // Intercept super-admin credentials: map alias to env email
   if (email.trim() === 'super-lankdev') {
     email = process.env.SUPER_ADMIN_EMAIL || 'super-lankdev@apex.internal'
+  }
+
+  // Rate limit per IP + per email: 10 attempts / 10 min (brute-force guard)
+  let ip = 'unknown'
+  try {
+    const headerList = await headers()
+    ip = headerList.get('x-forwarded-for')?.split(',')[0].trim() || headerList.get('x-real-ip') || 'unknown'
+  } catch {
+    ip = 'unknown'
+  }
+  const ipCheck = loginRateLimiter.check(`login-ip:${ip}`)
+  const emailCheck = loginRateLimiter.check(`login-email:${email.toLowerCase()}`)
+  if (!ipCheck.allowed || !emailCheck.allowed) {
+    return { error: 'Terlalu banyak percobaan login. Tunggu beberapa menit lalu coba lagi.' }
   }
 
   const client = await createClient()

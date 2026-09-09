@@ -72,13 +72,12 @@ export default function AttendancePage() {
 
         const today = new Date().toISOString().split('T')[0]
         
-        // Fetch active log (today's open log)
+        // Fetch active log (the single open session; unique index guarantees max 1)
         const { data: activeLogs } = await supabase
           .from('attendance_logs')
           .select('*')
           .eq('user_id', uProfile.id)
           .is('clock_out_time', null)
-          .gte('clock_in_time', `${today}T00:00:00.000Z`)
           .order('clock_in_time', { ascending: false })
           .limit(1)
 
@@ -194,6 +193,33 @@ export default function AttendancePage() {
     })
   }
 
+  // Resolve selfie display source: storage object path -> short-lived signed URL;
+  // data URL (offline-queued capture) passes through as-is.
+  const resolvePhotoSrc = async (photoUrl: string | null): Promise<string | null> => {
+    if (!photoUrl) return null
+    if (photoUrl.startsWith('data:') || photoUrl.startsWith('http')) return photoUrl
+    const { data } = await supabase.storage
+      .from('attendance')
+      .createSignedUrl(photoUrl, 300)
+    return data?.signedUrl ?? null
+  }
+
+  const [selectedPhotoSrc, setSelectedPhotoSrc] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    if (selectedLog) {
+      resolvePhotoSrc(selectedLog.photo_url).then((src) => {
+        if (!cancelled) setSelectedPhotoSrc(src)
+      })
+    } else {
+      setSelectedPhotoSrc(null)
+    }
+    return () => {
+      cancelled = true
+    }
+  }, [selectedLog])
+
   // Clock In Action
   const handleClockIn = async () => {
     if (!profile) return
@@ -219,8 +245,8 @@ export default function AttendancePage() {
         useWebWorker: true,
       })
 
-      // 2. Upload to storage (skip if offline)
-      let photoUrl = ''
+      // 2. Upload to storage (private bucket; store the object path, never base64 in DB)
+      let photoPath: string | null = null
       if (!isOffline) {
         const fileExt = 'jpg'
         const filePath = `${profile.company_id}/attendance/${profile.id}_${Date.now()}.${fileExt}`
@@ -228,18 +254,21 @@ export default function AttendancePage() {
           .from('attendance')
           .upload(filePath, compressedFile)
 
-        if (!uploadError) {
-          const { data } = supabase.storage.from('attendance').getPublicUrl(filePath)
-          photoUrl = data.publicUrl
+        if (uploadError) {
+          alert('Gagal mengunggah foto selfie. Periksa koneksi Anda lalu coba lagi.')
+          return
         }
+        photoPath = filePath
       }
 
       // 3. Create Payload with dynamic location
+      //    Offline mode keeps the compressed data URL in the queue (memory only);
+      //    the sync provider uploads it to storage before inserting the log.
       const payload = {
         user_id: profile.id,
         company_id: profile.company_id,
         clock_in_time: new Date().toISOString(),
-        photo_url: photoUrl || photoData,
+        photo_url: photoPath ?? photoData,
         location: geoLoc, // Pass the real GPS coordinates!
       }
 
@@ -248,7 +277,14 @@ export default function AttendancePage() {
         alert('Attendance request queued offline!')
       } else {
         const { error } = await supabase.from('attendance_logs').insert(payload)
-        if (error) throw error
+        if (error) {
+          // Unique index: one open session per user — already clocked in
+          if (error.code === '23505') {
+            alert('Anda masih memiliki sesi absensi aktif. Clock out dulu sebelum clock in lagi.')
+          } else {
+            throw error
+          }
+        }
       }
 
       setPhotoData(null)
@@ -275,13 +311,20 @@ export default function AttendancePage() {
         addToQueue({ type: 'clock_out', payload })
         alert('Clock out request queued offline!')
       } else {
-        const { error } = await supabase
+        // Guard: only close a session that is still open (prevents overwriting
+        // an earlier clock-out, e.g. replayed or delayed requests)
+        const { data: updated, error } = await supabase
           .from('attendance_logs')
           .update({
             clock_out_time: payload.clock_out_time,
           })
           .eq('id', activeLog.id)
+          .is('clock_out_time', null)
+          .select('id')
         if (error) throw error
+        if (!updated || updated.length === 0) {
+          alert('Sesi absensi ini sudah ditutup sebelumnya.')
+        }
       }
 
       fetchProfileAndLogs()
@@ -611,8 +654,8 @@ export default function AttendancePage() {
                 <div>
                   <h4 className="text-[10px] font-mono text-gray-450 uppercase mb-2">Selfie Verification</h4>
                   <div className="aspect-video w-full bg-gray-50 border border-border rounded-sm overflow-hidden relative">
-                    {selectedLog.photo_url ? (
-                      <img src={selectedLog.photo_url} alt="Verified employee biometric attendance selfie record" className="w-full h-full object-cover" />
+                    {selectedPhotoSrc ? (
+                      <img src={selectedPhotoSrc} alt="Verified employee biometric attendance selfie record" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-[10px] font-mono text-gray-450">
                         IMAGE UNAVAILABLE

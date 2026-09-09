@@ -133,6 +133,8 @@ export async function decideLeaveRequestAction(
     })
     .eq('id', requestId)
     .eq('company_id', companyId)
+    // Race guard: only transition a still-pending request (double-click safe)
+    .eq('status', 'pending')
 
   if (updateError) {
     return { error: 'Gagal memperbarui status pengajuan: ' + updateError.message }

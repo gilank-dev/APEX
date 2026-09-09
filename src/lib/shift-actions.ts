@@ -357,7 +357,7 @@ export async function decideSwapRequestAction(
   }
 
   if (decision === 'rejected') {
-    const { error: rejectError } = await client
+    const { data: rejectedRows, error: rejectError } = await client
       .from('shift_swap_requests')
       .update({
         status: 'rejected',
@@ -366,9 +366,15 @@ export async function decideSwapRequestAction(
       })
       .eq('id', swapId)
       .eq('company_id', companyId)
+      // Race guard: only transition a still-pending request
+      .eq('status', 'pending')
+      .select('id')
 
     if (rejectError) {
       return { error: 'Gagal menolak pertukaran: ' + rejectError.message }
+    }
+    if (!rejectedRows || rejectedRows.length === 0) {
+      return { error: 'Pengajuan sudah diputuskan.' }
     }
 
     revalidatePath(`/${slug}/shifts`)
@@ -478,14 +484,20 @@ export async function cancelSwapRequestAction(
     return { error: 'Pengajuan tidak dapat dibatalkan karena sudah diputuskan.' }
   }
 
-  const { error: cancelError } = await client
+  const { data: cancelledRows, error: cancelError } = await client
     .from('shift_swap_requests')
     .update({ status: 'cancelled' })
     .eq('id', swapId)
     .eq('company_id', companyId)
+    // Race guard: only a still-pending request can be cancelled
+    .eq('status', 'pending')
+    .select('id')
 
   if (cancelError) {
     return { error: 'Gagal membatalkan pengajuan: ' + cancelError.message }
+  }
+  if (!cancelledRows || cancelledRows.length === 0) {
+    return { error: 'Pengajuan tidak dapat dibatalkan karena sudah diputuskan.' }
   }
 
   revalidatePath(`/${slug}/shifts`)

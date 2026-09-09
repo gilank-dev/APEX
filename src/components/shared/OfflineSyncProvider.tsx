@@ -41,11 +41,36 @@ export default function OfflineSyncProvider({ children }: { children: React.Reac
       for (const action of offlineQueue) {
         let success = false
 
-        if (action.type === 'clock_in' || action.type === 'clock_out') {
-          const { error } = await supabase
+        if (action.type === 'clock_in') {
+          let photoUrl: string | null = action.payload.photo_url ?? null
+          // Offline captures kept the compressed data URL in the queue —
+          // upload to the private bucket now, store the path instead.
+          if (photoUrl && photoUrl.startsWith('data:')) {
+            try {
+              const blob = await (await fetch(photoUrl)).blob()
+              const filePath = `${action.payload.company_id}/attendance/${action.payload.user_id}_${Date.now()}_sync.jpg`
+              const { error: upErr } = await supabase.storage.from('attendance').upload(filePath, blob)
+              if (!upErr) {
+                photoUrl = filePath
+              }
+            } catch {
+              // keep data URL — better a log with inline photo than a lost attendance
+            }
+          }
+          const { error } = await supabase.from('attendance_logs').insert({ ...action.payload, photo_url: photoUrl })
+          // 23505: open session already exists — treat as synced (no data loss)
+          if (!error || error.code === '23505') success = true
+        } else if (action.type === 'clock_out') {
+          // Only close a session that is still open — never overwrite an
+          // existing clock-out with a stale offline timestamp.
+          const { data: closed } = await supabase
             .from('attendance_logs')
-            .upsert(action.payload)
-          if (!error) success = true
+            .update({ clock_out_time: action.payload.clock_out_time })
+            .eq('id', action.payload.id)
+            .is('clock_out_time', null)
+            .select('id')
+          if (closed && closed.length > 0) success = true
+          else success = true // already closed online — nothing to do, drop from queue
         } else if (action.type === 'create_task') {
           const { error } = await supabase
             .from('tasks')
