@@ -7,10 +7,13 @@ import {
   createDummyAccountAction,
   resetDummyPasswordAction,
   regenerateInviteCodeAction,
+  importEmployeesAction,
 } from '@/lib/admin-actions'
+import { parseCsv, rowsToEmployees } from '@/lib/csv'
 import { useAppStore } from '@/lib/store'
 import { CATEGORY_FEATURES } from '@/lib/features'
 import SkeletonLoader from '@/components/shared/SkeletonLoader'
+import { FileDown } from 'lucide-react'
 
 interface UserRecord {
   id: string
@@ -49,6 +52,73 @@ export default function AdminPage() {
   const [generatedCreds, setGeneratedCreds] = useState<{ email: string; pass: string } | null>(null)
   const [resetPassResult, setResetPassResult] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  // CSV Import State
+  const [csvText, setCsvText] = useState('')
+  const [importSummary, setImportSummary] = useState<{
+    imported: number
+    skipped: number
+    quotaReached?: boolean
+    errors: string[]
+  } | null>(null)
+  const [importFeedback, setImportFeedback] = useState<string | null>(null)
+
+  const previewData = csvText.trim() ? rowsToEmployees(parseCsv(csvText), { limit: 200 }) : null
+  const previewCount = previewData ? previewData.employees.length : 0
+
+  const handleDownloadTemplate = () => {
+    const csvContent = 'full_name,email,role_name\nBudi Santoso,budi@example.com,Employee\nSiti Rahma,,Employee\n'
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', 'template_karyawan_apex.csv')
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const text = event.target?.result as string
+      setCsvText(text || '')
+      setImportSummary(null)
+      setImportFeedback(null)
+    }
+    reader.readAsText(file)
+  }
+
+  const handleImportSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!company?.id || !csvText.trim()) return
+
+    setImportFeedback(null)
+    setImportSummary(null)
+
+    startTransition(async () => {
+      const res = await importEmployeesAction(company.id, company.slug, csvText)
+      if (res.error) {
+        setImportFeedback(res.error)
+      } else {
+        setImportSummary({
+          imported: res.imported || 0,
+          skipped: res.skipped || 0,
+          quotaReached: res.quotaReached,
+          errors: res.errors || [],
+        })
+        setCsvText('')
+        const { data: refreshedUsers } = await supabase
+          .from('users')
+          .select('*, roles(name, is_admin)')
+          .eq('company_id', company.id)
+        setUsers((refreshedUsers as any) || [])
+      }
+    })
+  }
 
   useEffect(() => {
     fetchAdminData()
@@ -204,6 +274,7 @@ export default function AdminPage() {
                   {[
                     { id: 'attendance', name: 'Presensi & Kehadiran', description: 'Pencatatan absensi selfie dan rekap kehadiran' },
                     { id: 'shifts', name: 'Jadwal Shift & Roster (Pro)', description: 'Template shift bergilir dan pembagian roster mingguan' },
+                    { id: 'leave', name: 'Cuti & Izin', description: 'Pengajuan cuti/izin/sakit karyawan dengan persetujuan admin' },
                     { id: 'payroll', name: 'Payroll-Lite (Pro)', description: 'Kompilasi gaji otomatis berbasis rekap kehadiran & lembur' },
                     { id: 'tasks', name: 'Manajemen Tugas (Task Board)', description: 'Papan Kanban penugasan dan monitoring operasional' },
                     { id: 'inventory', name: 'Inventaris Stok', description: 'Pencatatan aset barang dan stok barang' },
@@ -357,6 +428,104 @@ export default function AdminPage() {
                 </tbody>
               </table>
             </div>
+          </div>
+
+          {/* Import Karyawan (CSV) Card */}
+          <div className="liquid-glass p-6 border border-border rounded-md shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-2">
+              <h2 className="text-xs font-mono uppercase text-gray-500">
+                IMPORT KARYAWAN (CSV)
+              </h2>
+              <button
+                type="button"
+                onClick={handleDownloadTemplate}
+                className="inline-flex items-center gap-1.5 text-xs text-primary font-mono uppercase hover:underline cursor-pointer"
+              >
+                <FileDown className="w-3.5 h-3.5" /> Download template CSV
+              </button>
+            </div>
+
+            <p className="text-[11px] text-gray-600 font-sans leading-relaxed">
+              Impor banyak karyawan sekaligus dengan format CSV (header: <code>full_name,email,role_name</code>). Email dapat dikosongkan untuk akun dummy (lapangan). Maksimal 200 baris per impor.
+            </p>
+
+            <form onSubmit={handleImportSubmit} className="space-y-3">
+              <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+                <div>
+                  <label className="block text-[11px] font-mono text-gray-500 uppercase mb-1">
+                    Upload File CSV:
+                  </label>
+                  <input
+                    type="file"
+                    accept=".csv"
+                    onChange={handleFileUpload}
+                    disabled={isPending}
+                    className="text-xs font-mono text-gray-600 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border file:border-border file:text-xs file:font-mono file:bg-surface hover:file:bg-surface-hover cursor-pointer"
+                  />
+                </div>
+                {previewCount > 0 && (
+                  <span className="px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded font-mono text-xs font-semibold">
+                    Preview: {previewCount} Karyawan Terdeteksi
+                  </span>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-mono text-gray-500 uppercase mb-1">
+                  Atau Tempel (Paste) Teks CSV di Bawah:
+                </label>
+                <textarea
+                  value={csvText}
+                  onChange={(e) => setCsvText(e.target.value)}
+                  rows={4}
+                  placeholder={`full_name,email,role_name\nBudi Santoso,budi@example.com,Employee\nSiti Rahma,,Employee`}
+                  disabled={isPending}
+                  className="w-full px-3 py-2 bg-surface border border-border rounded-md text-xs font-mono focus:outline-none focus:border-primary text-foreground resize-y"
+                />
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={isPending || !csvText.trim()}
+                  className="px-6 py-2.5 bg-primary hover:bg-primary-hover disabled:opacity-50 text-white font-mono text-xs font-bold uppercase rounded-md transition-colors cursor-pointer"
+                >
+                  {isPending ? 'Mengimpor Data...' : 'Import Karyawan'}
+                </button>
+              </div>
+            </form>
+
+            {/* Result Summary */}
+            {importSummary && (
+              <div className="p-4 bg-green-50 border border-green-200 rounded-md font-mono text-xs text-green-700 space-y-2">
+                <p className="font-bold border-b border-green-200 pb-1 uppercase">
+                  RINGKASAN HASIL IMPOR
+                </p>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <p>Berhasil Diimpor: <span className="font-bold text-gray-900">{importSummary.imported} Orang</span></p>
+                  <p>Dilewati: <span className="font-bold text-gray-900">{importSummary.skipped} Orang</span></p>
+                </div>
+                {importSummary.quotaReached && (
+                  <p className="text-amber-700 font-bold bg-amber-50 p-2 rounded border border-amber-200">
+                    * Kuota karyawan paket langganan telah tercapai.
+                  </p>
+                )}
+                {importSummary.errors.length > 0 && (
+                  <div className="mt-2 text-[11px] text-red-600 space-y-1">
+                    <p className="font-bold">Catatan / Peringatan:</p>
+                    {importSummary.errors.map((err, i) => (
+                      <p key={i}>• {err}</p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {importFeedback && (
+              <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-xs font-mono rounded-md">
+                {importFeedback}
+              </div>
+            )}
           </div>
 
           {/* Create Dummy Account Panel */}

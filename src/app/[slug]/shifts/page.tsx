@@ -129,15 +129,24 @@ export default async function ShiftsPage({ params }: ShiftsPageProps) {
     roles: Array.isArray(e.roles) ? e.roles[0] : e.roles,
   }))
 
+  // Fetch shift swap requests
+  const { data: swapRequests } = await supabase
+    .from('shift_swap_requests')
+    .select('*')
+    .eq('company_id', company.id)
+    .order('created_at', { ascending: false })
+
   return (
     <ShiftsClient
       slug={slug}
       companyId={company.id}
       isProOrTrial={isProOrTrial}
       isAdminOrManager={isAdminOrManager}
+      currentUserId={profile.id}
       initialTemplates={(templates as ShiftTemplate[]) || []}
       employees={formattedEmployees}
       initialAssignments={(assignments as unknown as ShiftAssignment[]) || []}
+      initialSwaps={(swapRequests as any[]) || []}
     />
   )
 }

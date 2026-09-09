@@ -11,6 +11,18 @@ export interface Feature {
 export const CATEGORY_FEATURES: Record<string, Feature[]> = {
   corporate: [
     {
+      id: 'leave',
+      name: 'Cuti & Izin',
+      description: 'Pengajuan cuti/izin/sakit karyawan dengan persetujuan admin',
+      kpis: [
+        { label: 'Pending Requests', value: '0 Items' },
+        { label: 'Approval Rate', value: '100%' },
+        { label: 'Avg SLA', value: '2 Hours' }
+      ],
+      actionLabel: 'Kelola Pengajuan Cuti',
+      actionSuccessMessage: 'Pengajuan cuti berhasil diproses.'
+    },
+    {
       id: 'payroll-engine',
       name: 'Payroll Engine',
       description: 'Calculates basic salary, allowances, and tax deductions (PPh 21 equivalent) automatically on the server-side (Cron / Edge Functions) based on monthly employee attendance.',

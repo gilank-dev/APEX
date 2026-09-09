@@ -15,6 +15,7 @@ import {
   AlertCircle,
   Sparkles,
   Lock,
+  ArrowLeftRight,
 } from 'lucide-react'
 import {
   createShiftTemplateAction,
@@ -22,6 +23,9 @@ import {
   deleteShiftTemplateAction,
   saveWeeklyRosterAction,
   seedDefaultShiftTemplatesAction,
+  createSwapRequestAction,
+  decideSwapRequestAction,
+  cancelSwapRequestAction,
 } from '@/lib/shift-actions'
 
 export interface ShiftTemplate {
@@ -43,6 +47,19 @@ export interface ShiftAssignment {
   shift_templates?: ShiftTemplate
 }
 
+export interface ShiftSwapRequest {
+  id: string
+  company_id: string
+  requester_id: string
+  target_id: string
+  requester_assignment_id: string
+  target_assignment_id: string
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled'
+  decided_by: string | null
+  decided_at: string | null
+  created_at: string
+}
+
 export interface Employee {
   id: string
   full_name: string
@@ -58,9 +75,11 @@ interface ShiftsClientProps {
   companyId: string
   isProOrTrial: boolean
   isAdminOrManager: boolean
+  currentUserId?: string
   initialTemplates: ShiftTemplate[]
   employees: Employee[]
   initialAssignments: ShiftAssignment[]
+  initialSwaps?: ShiftSwapRequest[]
 }
 
 function isOvernightShift(startTime: string, endTime: string): boolean {
@@ -89,14 +108,23 @@ export default function ShiftsClient({
   companyId,
   isProOrTrial,
   isAdminOrManager,
+  currentUserId,
   initialTemplates,
   employees,
   initialAssignments,
+  initialSwaps,
 }: ShiftsClientProps) {
-  const [activeTab, setActiveTab] = useState<'roster' | 'templates'>('roster')
+  const [activeTab, setActiveTab] = useState<'roster' | 'templates' | 'swaps'>('roster')
   const [templates, setTemplates] = useState<ShiftTemplate[]>(initialTemplates)
+  const [swaps, setSwaps] = useState<ShiftSwapRequest[]>(initialSwaps || [])
   const [isPending, startTransition] = useTransition()
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+
+  // --- Swap State ---
+  const [isSwapModalOpen, setIsSwapModalOpen] = useState(false)
+  const [selectedReqAssignment, setSelectedReqAssignment] = useState<ShiftAssignment | null>(null)
+  const [targetUserId, setTargetUserId] = useState<string>('')
+  const [targetAssignmentId, setTargetAssignmentId] = useState<string>('')
 
   // --- Roster State ---
   const [currentMonday, setCurrentMonday] = useState<Date>(() => getMonday(new Date()))
@@ -286,6 +314,81 @@ export default function ShiftsClient({
     })
   }
 
+  // --- Swap Handlers ---
+  const handleOpenSwapModal = (assignment: ShiftAssignment) => {
+    setSelectedReqAssignment(assignment)
+    setTargetUserId('')
+    setTargetAssignmentId('')
+    setIsSwapModalOpen(true)
+  }
+
+  const handleCreateSwap = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedReqAssignment || !targetUserId || !targetAssignmentId) return
+
+    startTransition(async () => {
+      const res = await createSwapRequestAction(
+        companyId,
+        slug,
+        targetUserId,
+        selectedReqAssignment.id,
+        targetAssignmentId
+      )
+      if (res.error) {
+        showNotification('error', res.error)
+      } else {
+        setIsSwapModalOpen(false)
+        showNotification('success', 'Permintaan tukar shift berhasil dikirim.')
+        window.location.reload()
+      }
+    })
+  }
+
+  const handleDecideSwap = (swapId: string, decision: 'approved' | 'rejected') => {
+    startTransition(async () => {
+      const res = await decideSwapRequestAction(companyId, slug, swapId, decision)
+      if (res.error) {
+        showNotification('error', res.error)
+      } else {
+        setSwaps((prev) =>
+          prev.map((s) =>
+            s.id === swapId
+              ? {
+                  ...s,
+                  status: decision,
+                  decided_by: currentUserId || null,
+                  decided_at: new Date().toISOString(),
+                }
+              : s
+          )
+        )
+        showNotification(
+          'success',
+          decision === 'approved'
+            ? 'Pertukaran shift berhasil disetujui.'
+            : 'Pertukaran shift telah ditolak.'
+        )
+        if (decision === 'approved') {
+          window.location.reload()
+        }
+      }
+    })
+  }
+
+  const handleCancelSwap = (swapId: string) => {
+    startTransition(async () => {
+      const res = await cancelSwapRequestAction(companyId, slug, swapId)
+      if (res.error) {
+        showNotification('error', res.error)
+      } else {
+        setSwaps((prev) =>
+          prev.map((s) => (s.id === swapId ? { ...s, status: 'cancelled' } : s))
+        )
+        showNotification('success', 'Permintaan tukar shift berhasil dibatalkan.')
+      }
+    })
+  }
+
   // --- Pro Gate Banner if company is Free and not in trial ---
   if (!isProOrTrial) {
     return (
@@ -358,6 +461,16 @@ export default function ShiftsClient({
             }`}
           >
             Template Shift ({templates.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('swaps')}
+            className={`px-4 py-1.5 text-xs font-mono uppercase rounded-md transition-all cursor-pointer ${
+              activeTab === 'swaps'
+                ? 'bg-primary text-white font-bold shadow-sm'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+            }`}
+          >
+            Tukar Shift {swaps.filter((s) => s.status === 'pending').length > 0 ? `(${swaps.filter((s) => s.status === 'pending').length})` : ''}
           </button>
         </div>
       </div>
@@ -683,6 +796,334 @@ export default function ShiftsClient({
       )}
 
       {/* ==================================================================== */}
+      {/* TAB 3: SHIFT SWAP (TUKAR SHIFT)                                       */}
+      {/* ==================================================================== */}
+      {activeTab === 'swaps' && (
+        <div className="space-y-6">
+          {/* Section: Pending Swaps for Manager / Admin */}
+          {isAdminOrManager && (
+            <div className="liquid-glass p-6 border border-border rounded-lg shadow-sm space-y-4">
+              <div className="flex items-center justify-between border-b border-border pb-3">
+                <div>
+                  <h2 className="text-sm font-bold font-sans uppercase text-gray-900">
+                    Antrean Persetujuan Tukar Shift (Admin / Manager)
+                  </h2>
+                  <p className="text-xs text-gray-500 font-mono mt-0.5">
+                    PERSETUJUAN PERMINTAAN TUKAR SHIFT ANTAR KARYAWAN
+                  </p>
+                </div>
+                <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 font-mono text-xs font-bold">
+                  {swaps.filter((s) => s.status === 'pending').length} Menunggu
+                </span>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse min-w-[700px]">
+                  <thead>
+                    <tr className="border-b border-border text-xs font-mono text-gray-500 uppercase tracking-wider">
+                      <th className="py-2.5 px-3">Pemohon</th>
+                      <th className="py-2.5 px-3">Rekan Dituju</th>
+                      <th className="py-2.5 px-3">Status</th>
+                      <th className="py-2.5 px-3 text-right">Persetujuan</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-xs divide-y divide-border">
+                    {swaps
+                      .filter((s) => s.status === 'pending')
+                      .map((swap) => {
+                        const reqEmp = employees.find((e) => e.id === swap.requester_id)
+                        const tgtEmp = employees.find((e) => e.id === swap.target_id)
+                        const reqAssign = initialAssignments.find((a) => a.id === swap.requester_assignment_id)
+                        const tgtAssign = initialAssignments.find((a) => a.id === swap.target_assignment_id)
+                        const reqTmpl = templates.find((t) => t.id === reqAssign?.shift_template_id)
+                        const tgtTmpl = templates.find((t) => t.id === tgtAssign?.shift_template_id)
+
+                        return (
+                          <tr key={swap.id} className="hover:bg-gray-50/50 transition-colors">
+                            <td className="py-3 px-3">
+                              <p className="font-sans font-semibold text-gray-900">
+                                {reqEmp?.full_name || 'Pemohon'}
+                              </p>
+                              <p className="text-[11px] font-mono text-gray-500">
+                                {reqAssign?.assignment_date} ({reqTmpl?.name || 'Shift'})
+                              </p>
+                            </td>
+                            <td className="py-3 px-3">
+                              <p className="font-sans font-semibold text-gray-900">
+                                {tgtEmp?.full_name || 'Target'}
+                              </p>
+                              <p className="text-[11px] font-mono text-gray-500">
+                                {tgtAssign?.assignment_date} ({tgtTmpl?.name || 'Shift'})
+                              </p>
+                            </td>
+                            <td className="py-3 px-3">
+                              <span className="px-2 py-0.5 rounded font-mono text-[10px] uppercase font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                MENUNGGU
+                              </span>
+                            </td>
+                            <td className="py-3 px-3 text-right">
+                              <div className="inline-flex items-center gap-1.5">
+                                <button
+                                  onClick={() => handleDecideSwap(swap.id, 'approved')}
+                                  disabled={isPending}
+                                  className="px-2.5 py-1 bg-green-600 hover:bg-green-700 text-white rounded font-mono text-[10px] uppercase font-bold transition-colors cursor-pointer"
+                                >
+                                  Setujui
+                                </button>
+                                <button
+                                  onClick={() => handleDecideSwap(swap.id, 'rejected')}
+                                  disabled={isPending}
+                                  className="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded font-mono text-[10px] uppercase font-bold transition-colors cursor-pointer"
+                                >
+                                  Tolak
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
+
+                    {swaps.filter((s) => s.status === 'pending').length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="py-8 text-center text-gray-400 font-mono text-xs">
+                          Tidak ada permohonan tukar shift yang menunggu persetujuan.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Section: Employee's Own Shifts This Week */}
+          <div className="liquid-glass p-6 border border-border rounded-lg shadow-sm space-y-4">
+            <div className="border-b border-border pb-3">
+              <h2 className="text-sm font-bold font-sans uppercase text-gray-900">
+                Shift Saya Minggu Ini
+              </h2>
+              <p className="text-xs text-gray-500 font-mono mt-0.5">
+                PILIH SHIFT UNTUK MENGAJUKAN PERTUKARAN DENGAN REKAN KERJA
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {weekDays.map((day) => {
+                const dateStr = toDateString(day)
+                const currentAssign = initialAssignments.find(
+                  (a) => a.user_id === currentUserId && a.assignment_date === dateStr
+                )
+                const tmpl = templates.find((t) => t.id === currentAssign?.shift_template_id)
+                const dayIndex = (day.getDay() + 6) % 7 // Monday = 0
+
+                return (
+                  <div
+                    key={dateStr}
+                    className="p-3.5 border border-border rounded-lg bg-surface flex flex-col justify-between gap-3 shadow-2xs"
+                  >
+                    <div>
+                      <div className="flex justify-between items-center text-xs font-mono text-gray-500 mb-1">
+                        <span className="font-bold">{dayNamesIndo[dayIndex]}</span>
+                        <span>{day.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
+                      </div>
+                      {tmpl ? (
+                        <div className="mt-1">
+                          <p className="font-sans font-bold text-sm text-foreground">{tmpl.name}</p>
+                          <p className="font-mono text-xs text-gray-600">
+                            {tmpl.start_time.slice(0, 5)} - {tmpl.end_time.slice(0, 5)} WIB
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="font-mono text-xs text-gray-400 mt-2">Libur (OFF)</p>
+                      )}
+                    </div>
+
+                    {tmpl && currentAssign && (
+                      <button
+                        onClick={() => handleOpenSwapModal(currentAssign)}
+                        className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 bg-surface hover:bg-orange-50 text-primary border border-primary/30 rounded-md text-xs font-mono uppercase font-bold transition-all cursor-pointer"
+                      >
+                        <ArrowLeftRight className="w-3.5 h-3.5" /> Minta Tukar
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Section: Incoming Swaps (Requests waiting for current user's consent) */}
+          <div className="liquid-glass p-6 border border-border rounded-lg shadow-sm space-y-4">
+            <div className="border-b border-border pb-3">
+              <h2 className="text-sm font-bold font-sans uppercase text-gray-900">
+                Permintaan Tukar Masuk (Menunggu Konfirmasi Anda)
+              </h2>
+              <p className="text-xs text-gray-500 font-mono mt-0.5">
+                REKAN KERJA MENGAJUKAN PERTUKARAN SHIFT DENGAN ANDA
+              </p>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[650px]">
+                <thead>
+                  <tr className="border-b border-border text-xs font-mono text-gray-500 uppercase tracking-wider">
+                    <th className="py-2.5 px-3">Rekan Pengaju</th>
+                    <th className="py-2.5 px-3">Shift Ditawarkan</th>
+                    <th className="py-2.5 px-3">Shift Anda yang Diminta</th>
+                    <th className="py-2.5 px-3 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="text-xs divide-y divide-border">
+                  {swaps
+                    .filter((s) => s.target_id === currentUserId && s.status === 'pending')
+                    .map((swap) => {
+                      const reqEmp = employees.find((e) => e.id === swap.requester_id)
+                      const reqAssign = initialAssignments.find((a) => a.id === swap.requester_assignment_id)
+                      const tgtAssign = initialAssignments.find((a) => a.id === swap.target_assignment_id)
+                      const reqTmpl = templates.find((t) => t.id === reqAssign?.shift_template_id)
+                      const tgtTmpl = templates.find((t) => t.id === tgtAssign?.shift_template_id)
+
+                      return (
+                        <tr key={swap.id} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="py-3 px-3 font-sans font-semibold text-gray-900">
+                            {reqEmp?.full_name || 'Rekan Kerja'}
+                          </td>
+                          <td className="py-3 px-3 font-mono text-gray-700">
+                            {reqAssign?.assignment_date} ({reqTmpl?.name || 'Shift'})
+                          </td>
+                          <td className="py-3 px-3 font-mono text-gray-700">
+                            {tgtAssign?.assignment_date} ({tgtTmpl?.name || 'Shift'})
+                          </td>
+                          <td className="py-3 px-3 text-right">
+                            <div className="inline-flex items-center gap-1.5">
+                              <button
+                                onClick={() => handleDecideSwap(swap.id, 'approved')}
+                                disabled={isPending}
+                                className="px-2.5 py-1 bg-green-600 hover:bg-green-700 text-white rounded font-mono text-[10px] uppercase font-bold transition-colors cursor-pointer"
+                              >
+                                Setujui
+                              </button>
+                              <button
+                                onClick={() => handleDecideSwap(swap.id, 'rejected')}
+                                disabled={isPending}
+                                className="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded font-mono text-[10px] uppercase font-bold transition-colors cursor-pointer"
+                              >
+                                Tolak
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+
+                  {swaps.filter((s) => s.target_id === currentUserId && s.status === 'pending').length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="py-8 text-center text-gray-400 font-mono text-xs">
+                        Tidak ada permintaan tukar shift masuk.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Section: History of My Swap Requests */}
+          <div className="liquid-glass p-6 border border-border rounded-lg shadow-sm space-y-4">
+            <div className="border-b border-border pb-3">
+              <h2 className="text-sm font-bold font-sans uppercase text-gray-900">
+                Riwayat Pengajuan Tukar Shift Saya
+              </h2>
+              <p className="text-xs text-gray-500 font-mono mt-0.5">
+                STATUS PERMINTAAN TUKAR SHIFT YANG PERNAH ANDA AJUKAN
+              </p>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[650px]">
+                <thead>
+                  <tr className="border-b border-border text-xs font-mono text-gray-500 uppercase tracking-wider">
+                    <th className="py-2.5 px-3">Rekan Dituju</th>
+                    <th className="py-2.5 px-3">Shift Saya</th>
+                    <th className="py-2.5 px-3">Shift Rekan</th>
+                    <th className="py-2.5 px-3">Status</th>
+                    <th className="py-2.5 px-3 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="text-xs divide-y divide-border">
+                  {swaps
+                    .filter((s) => s.requester_id === currentUserId)
+                    .map((swap) => {
+                      const tgtEmp = employees.find((e) => e.id === swap.target_id)
+                      const reqAssign = initialAssignments.find((a) => a.id === swap.requester_assignment_id)
+                      const tgtAssign = initialAssignments.find((a) => a.id === swap.target_assignment_id)
+                      const reqTmpl = templates.find((t) => t.id === reqAssign?.shift_template_id)
+                      const tgtTmpl = templates.find((t) => t.id === tgtAssign?.shift_template_id)
+
+                      const badgeClass =
+                        swap.status === 'approved'
+                          ? 'bg-green-50 text-green-700 border-green-200'
+                          : swap.status === 'rejected'
+                          ? 'bg-red-50 text-red-700 border-red-200'
+                          : swap.status === 'cancelled'
+                          ? 'bg-gray-100 text-gray-600 border-gray-200'
+                          : 'bg-amber-50 text-amber-700 border-amber-200'
+
+                      const statusLabel =
+                        swap.status === 'approved'
+                          ? 'DISETUJUI'
+                          : swap.status === 'rejected'
+                          ? 'DITOLAK'
+                          : swap.status === 'cancelled'
+                          ? 'DIBATALKAN'
+                          : 'MENUNGGU'
+
+                      return (
+                        <tr key={swap.id} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="py-3 px-3 font-sans font-semibold text-gray-900">
+                            {tgtEmp?.full_name || 'Rekan Kerja'}
+                          </td>
+                          <td className="py-3 px-3 font-mono text-gray-700">
+                            {reqAssign?.assignment_date} ({reqTmpl?.name || 'Shift'})
+                          </td>
+                          <td className="py-3 px-3 font-mono text-gray-700">
+                            {tgtAssign?.assignment_date} ({tgtTmpl?.name || 'Shift'})
+                          </td>
+                          <td className="py-3 px-3">
+                            <span className={`px-2 py-0.5 rounded font-mono text-[10px] uppercase font-bold border ${badgeClass}`}>
+                              {statusLabel}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3 text-right">
+                            {swap.status === 'pending' && (
+                              <button
+                                onClick={() => handleCancelSwap(swap.id)}
+                                disabled={isPending}
+                                className="px-2.5 py-1 text-gray-600 hover:text-red-600 border border-border rounded font-mono text-[10px] uppercase transition-colors cursor-pointer"
+                              >
+                                Batalkan
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })}
+
+                  {swaps.filter((s) => s.requester_id === currentUserId).length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-gray-400 font-mono text-xs">
+                        Anda belum pernah mengajukan tukar shift.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================================== */}
       {/* MODAL: ADD / EDIT TEMPLATE                                           */}
       {/* ==================================================================== */}
       {isModalOpen && (
@@ -771,6 +1212,127 @@ export default function ShiftsClient({
                   className="px-5 py-2 bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-xs font-mono uppercase font-bold rounded-md transition-colors cursor-pointer"
                 >
                   {isPending ? 'Menyimpan...' : 'Simpan Template'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================================== */}
+      {/* MODAL: SWAP SHIFT DIALOG                                             */}
+      {/* ==================================================================== */}
+      {isSwapModalOpen && selectedReqAssignment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-surface border border-border rounded-xl shadow-2xl max-w-md w-full p-6 space-y-5 animate-in fade-in zoom-in duration-150">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <h3 className="text-sm font-bold font-sans uppercase text-gray-900">
+                Pengajuan Tukar Shift
+              </h3>
+              <button
+                onClick={() => setIsSwapModalOpen(false)}
+                className="text-gray-400 hover:text-gray-700 text-xs font-mono uppercase cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateSwap} className="space-y-4">
+              {/* Selected requester assignment details */}
+              <div className="p-3 bg-orange-50/50 border border-orange-200 rounded-md text-xs font-mono space-y-1">
+                <p className="font-bold text-primary uppercase">Shift Anda yang Ditukar:</p>
+                <p className="text-gray-700">Tanggal: {selectedReqAssignment.assignment_date}</p>
+                <p className="text-gray-700">
+                  Shift:{' '}
+                  {templates.find((t) => t.id === selectedReqAssignment.shift_template_id)?.name || 'Shift'}
+                  {' '}(
+                  {templates.find((t) => t.id === selectedReqAssignment.shift_template_id)?.start_time.slice(0, 5)} -{' '}
+                  {templates.find((t) => t.id === selectedReqAssignment.shift_template_id)?.end_time.slice(0, 5)} WIB)
+                </p>
+              </div>
+
+              {/* Select target employee */}
+              <div>
+                <label className="block text-xs font-mono uppercase text-gray-600 mb-1">
+                  Pilih Rekan Kerja
+                </label>
+                <select
+                  value={targetUserId}
+                  onChange={(e) => {
+                    setTargetUserId(e.target.value)
+                    setTargetAssignmentId('')
+                  }}
+                  required
+                  disabled={isPending}
+                  className="w-full px-3 py-2 border border-border rounded-md text-xs font-sans focus:outline-none focus:border-primary text-foreground bg-white"
+                >
+                  <option value="">— Pilih Rekan Kerja —</option>
+                  {employees
+                    .filter((emp) => emp.id !== currentUserId)
+                    .map((emp) => (
+                      <option key={emp.id} value={emp.id}>
+                        {emp.full_name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              {/* Select target assignment */}
+              <div>
+                <label className="block text-xs font-mono uppercase text-gray-600 mb-1">
+                  Pilih Shift Rekan Kerja (Minggu Ini)
+                </label>
+                <select
+                  value={targetAssignmentId}
+                  onChange={(e) => setTargetAssignmentId(e.target.value)}
+                  required
+                  disabled={isPending || !targetUserId}
+                  className="w-full px-3 py-2 border border-border rounded-md text-xs font-sans focus:outline-none focus:border-primary text-foreground bg-white"
+                >
+                  <option value="">— Pilih Shift Tujuan —</option>
+                  {initialAssignments
+                    .filter(
+                      (a) =>
+                        a.user_id === targetUserId &&
+                        a.assignment_date !== selectedReqAssignment.assignment_date &&
+                        !!a.shift_template_id
+                    )
+                    .map((a) => {
+                      const tmpl = templates.find((t) => t.id === a.shift_template_id)
+                      return (
+                        <option key={a.id} value={a.id}>
+                          {a.assignment_date} — {tmpl?.name || 'Shift'} ({tmpl?.start_time.slice(0, 5)}-{tmpl?.end_time.slice(0, 5)})
+                        </option>
+                      )
+                    })}
+                </select>
+                {targetUserId &&
+                  initialAssignments.filter(
+                    (a) =>
+                      a.user_id === targetUserId &&
+                      a.assignment_date !== selectedReqAssignment.assignment_date &&
+                      !!a.shift_template_id
+                  ).length === 0 && (
+                    <p className="text-[11px] text-amber-600 font-mono mt-1">
+                      Rekan kerja ini tidak memiliki shift lain di tanggal berbeda minggu ini.
+                    </p>
+                  )}
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => setIsSwapModalOpen(false)}
+                  className="px-4 py-2 text-xs font-mono uppercase border border-border rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isPending || !targetUserId || !targetAssignmentId}
+                  className="px-5 py-2 bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-xs font-mono uppercase font-bold rounded-md transition-colors cursor-pointer"
+                >
+                  {isPending ? 'Mengirim...' : 'Kirim Pengajuan'}
                 </button>
               </div>
             </form>

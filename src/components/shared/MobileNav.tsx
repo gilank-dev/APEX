@@ -47,6 +47,11 @@ export default function MobileNav({
       visible: activeModules.includes('shifts')
     },
     {
+      href: `/${slug}/leave`,
+      label: 'Cuti & Izin',
+      visible: activeModules.includes('leave')
+    },
+    {
       href: `/${slug}/payroll`,
       label: 'Payroll',
       visible: activeModules.includes('payroll')
@@ -83,7 +88,7 @@ export default function MobileNav({
   // Build active dynamic links under "Additional Feature" header
   // Excluding core modules
   const dynamicLinks = industryFeatures
-    .filter((feat) => activeModules.includes(feat.id) && !['attendance', 'tasks', 'inventory'].includes(feat.id))
+    .filter((feat) => activeModules.includes(feat.id) && !['attendance', 'tasks', 'inventory', 'leave'].includes(feat.id))
     .map((feat) => {
       let mappedHref = `/${slug}/${feat.id}`
       

@@ -2,7 +2,7 @@
 
 import { createAdminClient, createClient } from './supabase/server'
 import { revalidatePath } from 'next/cache'
-import { requireManager } from '@/lib/authz'
+import { getCallerProfile, requireManager } from '@/lib/authz'
 
 export interface ShiftTemplateInput {
   name: string
@@ -241,3 +241,254 @@ export async function saveWeeklyRosterAction(
   revalidatePath(`/${slug}/attendance`)
   return { success: true }
 }
+
+// ---------------------------------------------------------------------------
+// SHIFT SWAP ACTIONS
+// ---------------------------------------------------------------------------
+
+export async function createSwapRequestAction(
+  companyId: string,
+  slug: string,
+  targetUserId: string,
+  requesterAssignmentId: string,
+  targetAssignmentId: string
+) {
+  const profile = await getCallerProfile()
+  if (!profile || profile.company_id !== companyId) {
+    return { error: 'Akses ditolak.' }
+  }
+
+  if (targetUserId === profile.user_id) {
+    return { error: 'Tidak dapat menukar shift dengan diri sendiri.' }
+  }
+
+  const client = await createClient()
+
+  // Fetch both assignments and verify company ownership
+  const { data: reqAssign, error: reqErr } = await client
+    .from('shift_assignments')
+    .select('*')
+    .eq('id', requesterAssignmentId)
+    .eq('company_id', companyId)
+    .maybeSingle()
+
+  const { data: targetAssign, error: tgtErr } = await client
+    .from('shift_assignments')
+    .select('*')
+    .eq('id', targetAssignmentId)
+    .eq('company_id', companyId)
+    .maybeSingle()
+
+  if (reqErr || tgtErr || !reqAssign || !targetAssign) {
+    return { error: 'Data jadwal shift tidak ditemukan.' }
+  }
+
+  // Requester assignment must be caller's own
+  if (reqAssign.user_id !== profile.user_id) {
+    return { error: 'Akses ditolak. Anda hanya dapat menukar shift milik Anda.' }
+  }
+
+  // Target assignment must belong to targetUserId
+  if (targetAssign.user_id !== targetUserId) {
+    return { error: 'Target shift tidak cocok dengan pengguna target.' }
+  }
+
+  // Dates must differ
+  if (reqAssign.assignment_date === targetAssign.assignment_date) {
+    return { error: 'Tanggal shift harus berbeda untuk pertukaran shift.' }
+  }
+
+  const { error: insertError } = await client
+    .from('shift_swap_requests')
+    .insert({
+      company_id: companyId,
+      requester_id: profile.user_id,
+      target_id: targetUserId,
+      requester_assignment_id: requesterAssignmentId,
+      target_assignment_id: targetAssignmentId,
+      status: 'pending',
+    })
+
+  if (insertError) {
+    return { error: 'Gagal membuat pengajuan tukar shift: ' + insertError.message }
+  }
+
+  revalidatePath(`/${slug}/shifts`)
+  return { success: true }
+}
+
+export async function decideSwapRequestAction(
+  companyId: string,
+  slug: string,
+  swapId: string,
+  decision: 'approved' | 'rejected'
+) {
+  const profile = await getCallerProfile()
+  if (!profile || profile.company_id !== companyId) {
+    return { error: 'Akses ditolak.' }
+  }
+
+  const isManager = profile.is_admin || ['Admin', 'Manager'].includes(profile.role_name)
+
+  if (!['approved', 'rejected'].includes(decision)) {
+    return { error: 'Keputusan tidak valid.' }
+  }
+
+  const client = await createClient()
+
+  const { data: swap, error: swapError } = await client
+    .from('shift_swap_requests')
+    .select('*')
+    .eq('id', swapId)
+    .eq('company_id', companyId)
+    .maybeSingle()
+
+  if (swapError || !swap) {
+    return { error: 'Pengajuan tukar shift tidak ditemukan.' }
+  }
+
+  if (swap.status !== 'pending') {
+    return { error: 'Pengajuan sudah diputuskan.' }
+  }
+
+  // Consent: only target employee or Admin/Manager can decide
+  if (!isManager && swap.target_id !== profile.user_id) {
+    return { error: 'Akses ditolak. Hanya target atau Manager yang dapat memutuskan.' }
+  }
+
+  if (decision === 'rejected') {
+    const { error: rejectError } = await client
+      .from('shift_swap_requests')
+      .update({
+        status: 'rejected',
+        decided_by: profile.user_id,
+        decided_at: new Date().toISOString(),
+      })
+      .eq('id', swapId)
+      .eq('company_id', companyId)
+
+    if (rejectError) {
+      return { error: 'Gagal menolak pertukaran: ' + rejectError.message }
+    }
+
+    revalidatePath(`/${slug}/shifts`)
+    return { success: true }
+  }
+
+  // Transaction-style double-update of both assignment rows via adminClient
+  // AFTER re-verifying company ownership of both assignment ids (defense in depth)
+  const adminClient = createAdminClient()
+
+  const { data: reqAssign } = await adminClient
+    .from('shift_assignments')
+    .select('*')
+    .eq('id', swap.requester_assignment_id)
+    .eq('company_id', companyId)
+    .maybeSingle()
+
+  const { data: targetAssign } = await adminClient
+    .from('shift_assignments')
+    .select('*')
+    .eq('id', swap.target_assignment_id)
+    .eq('company_id', companyId)
+    .maybeSingle()
+
+  if (!reqAssign || !targetAssign) {
+    return { error: 'Jadwal shift yang akan ditukar tidak ditemukan.' }
+  }
+
+  // Verify ownership hasn't changed
+  if (reqAssign.user_id !== swap.requester_id || targetAssign.user_id !== swap.target_id) {
+    return { error: 'Kepemilikan shift telah berubah sebelum pertukaran disetujui.' }
+  }
+
+  // Swap user_id values
+  const { error: err1 } = await adminClient
+    .from('shift_assignments')
+    .update({ user_id: swap.target_id })
+    .eq('id', reqAssign.id)
+    .eq('company_id', companyId)
+
+  if (err1) {
+    return { error: 'Gagal menukar shift pemohon: ' + err1.message }
+  }
+
+  const { error: err2 } = await adminClient
+    .from('shift_assignments')
+    .update({ user_id: swap.requester_id })
+    .eq('id', targetAssign.id)
+    .eq('company_id', companyId)
+
+  if (err2) {
+    // Rollback first update
+    await adminClient
+      .from('shift_assignments')
+      .update({ user_id: swap.requester_id })
+      .eq('id', reqAssign.id)
+      .eq('company_id', companyId)
+    return { error: 'Gagal menukar shift target: ' + err2.message }
+  }
+
+  const { error: swapUpdateErr } = await adminClient
+    .from('shift_swap_requests')
+    .update({
+      status: 'approved',
+      decided_by: profile.user_id,
+      decided_at: new Date().toISOString(),
+    })
+    .eq('id', swap.id)
+    .eq('company_id', companyId)
+
+  if (swapUpdateErr) {
+    return { error: 'Gagal memperbarui status pengajuan: ' + swapUpdateErr.message }
+  }
+
+  revalidatePath(`/${slug}/shifts`)
+  return { success: true }
+}
+
+export async function cancelSwapRequestAction(
+  companyId: string,
+  slug: string,
+  swapId: string
+) {
+  const profile = await getCallerProfile()
+  if (!profile || profile.company_id !== companyId) {
+    return { error: 'Akses ditolak.' }
+  }
+
+  const client = await createClient()
+
+  const { data: swap, error: fetchErr } = await client
+    .from('shift_swap_requests')
+    .select('*')
+    .eq('id', swapId)
+    .eq('company_id', companyId)
+    .maybeSingle()
+
+  if (fetchErr || !swap) {
+    return { error: 'Pengajuan tukar shift tidak ditemukan.' }
+  }
+
+  if (swap.requester_id !== profile.user_id) {
+    return { error: 'Akses ditolak. Hanya pemohon yang dapat membatalkan.' }
+  }
+
+  if (swap.status !== 'pending') {
+    return { error: 'Pengajuan tidak dapat dibatalkan karena sudah diputuskan.' }
+  }
+
+  const { error: cancelError } = await client
+    .from('shift_swap_requests')
+    .update({ status: 'cancelled' })
+    .eq('id', swapId)
+    .eq('company_id', companyId)
+
+  if (cancelError) {
+    return { error: 'Gagal membatalkan pengajuan: ' + cancelError.message }
+  }
+
+  revalidatePath(`/${slug}/shifts`)
+  return { success: true }
+}
+

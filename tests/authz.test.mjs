@@ -1,4 +1,4 @@
-﻿import test, { describe, it } from 'node:test'
+import test, { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -79,7 +79,7 @@ describe('APEX Authorization Guard Test Suite', () => {
 
     it('ensures every exported action has an authorization guard before createAdminClient', () => {
       const allActions = actionFiles.flatMap(extractExportedActions)
-      assert.strictEqual(allActions.length, 10, 'Expected exactly 10 exported actions across the 3 files')
+      assert.strictEqual(allActions.length, 14, 'Expected exactly 14 exported actions across the 3 files')
 
       for (const action of allActions) {
         const hasRequireManager = action.body.includes('requireManager(')

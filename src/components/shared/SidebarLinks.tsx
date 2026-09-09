@@ -33,6 +33,11 @@ export default function SidebarLinks({ slug, activeModules, isAdminOrManager, ca
       visible: activeModules.includes('shifts')
     },
     {
+      href: `/${slug}/leave`,
+      label: 'Cuti & Izin',
+      visible: activeModules.includes('leave')
+    },
+    {
       href: `/${slug}/payroll`,
       label: 'Payroll',
       visible: activeModules.includes('payroll')
@@ -69,7 +74,7 @@ export default function SidebarLinks({ slug, activeModules, isAdminOrManager, ca
   // Build list of active dynamic features under "Additional Feature" header
   // Note: we exclude the core module IDs ('attendance', 'tasks', 'inventory') if they are in the list
   const dynamicLinks = industryFeatures
-    .filter((feat) => activeModules.includes(feat.id) && !['attendance', 'tasks', 'inventory'].includes(feat.id))
+    .filter((feat) => activeModules.includes(feat.id) && !['attendance', 'tasks', 'inventory', 'leave'].includes(feat.id))
     .map((feat) => {
       let mappedHref = `/${slug}/${feat.id}`
       
