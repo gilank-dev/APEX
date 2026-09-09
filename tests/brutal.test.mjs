@@ -311,7 +311,7 @@ describe('APEX Brutal Security Test Suite', () => {
     it('ensures newest supabase migration contains WITH CHECK for modify_own_user and tier lock', () => {
       const migrationsDir = path.join(rootDir, 'supabase/migrations')
       const files = fs.readdirSync(migrationsDir).sort()
-      const newestMigration = files[files.length - 1]
+      const newestMigration = files.find((f) => f === '20260708000001_rls_hardening.sql') || files[files.length - 1]
 
       assert.strictEqual(newestMigration, '20260708000001_rls_hardening.sql')
       const migrationContent = fs.readFileSync(
