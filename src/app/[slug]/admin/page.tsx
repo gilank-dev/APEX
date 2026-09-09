@@ -178,27 +178,67 @@ export default function AdminPage() {
               </span>
             </div>
 
-            <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
-              {(CATEGORY_FEATURES[company?.category || 'corporate'] || CATEGORY_FEATURES.corporate).map((feat) => (
-                <label
-                  key={feat.id}
-                  className="flex items-start gap-3 cursor-pointer p-2.5 bg-surface hover:bg-surface-hover rounded-md border border-border transition-colors block"
-                >
-                  <input
-                    type="checkbox"
-                    checked={modules.includes(feat.id)}
-                    onChange={() => handleToggleModule(feat.id)}
-                    disabled={isPending}
-                    className="mt-0.5 w-4 h-4 bg-transparent border-border text-primary focus:ring-0 focus:ring-offset-0 rounded-md cursor-pointer shrink-0"
-                  />
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-foreground font-sans tracking-wide truncate">{feat.name}</p>
-                    <p className="text-[11px] text-gray-500 leading-normal mt-0.5">
-                      {feat.description}
-                    </p>
-                  </div>
-                </label>
-              ))}
+            <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+              <div>
+                <p className="text-[10px] font-mono text-gray-400 uppercase tracking-wider mb-2 font-bold">
+                  Modul Utama & Pro
+                </p>
+                <div className="space-y-1.5">
+                  {[
+                    { id: 'attendance', name: 'Presensi & Kehadiran', description: 'Pencatatan absensi selfie dan rekap kehadiran' },
+                    { id: 'shifts', name: 'Jadwal Shift & Roster (Pro)', description: 'Template shift bergilir dan pembagian roster mingguan' },
+                    { id: 'tasks', name: 'Manajemen Tugas (Task Board)', description: 'Papan Kanban penugasan dan monitoring operasional' },
+                    { id: 'inventory', name: 'Inventaris Stok', description: 'Pencatatan aset barang dan stok barang' },
+                  ].map((mod) => (
+                    <label
+                      key={mod.id}
+                      className="flex items-start gap-3 cursor-pointer p-2.5 bg-surface hover:bg-surface-hover rounded-md border border-border transition-colors block"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={modules.includes(mod.id)}
+                        onChange={() => handleToggleModule(mod.id)}
+                        disabled={isPending}
+                        className="mt-0.5 w-4 h-4 bg-transparent border-border text-primary focus:ring-0 focus:ring-offset-0 rounded-md cursor-pointer shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-foreground font-sans tracking-wide truncate">{mod.name}</p>
+                        <p className="text-[11px] text-gray-500 leading-normal mt-0.5">
+                          {mod.description}
+                        </p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-border">
+                <p className="text-[10px] font-mono text-gray-400 uppercase tracking-wider mb-2 font-bold">
+                  Fitur Industri ({company?.category?.toUpperCase() || 'CORPORATE'})
+                </p>
+                <div className="space-y-1.5">
+                  {(CATEGORY_FEATURES[company?.category || 'corporate'] || CATEGORY_FEATURES.corporate).map((feat) => (
+                    <label
+                      key={feat.id}
+                      className="flex items-start gap-3 cursor-pointer p-2.5 bg-surface hover:bg-surface-hover rounded-md border border-border transition-colors block"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={modules.includes(feat.id)}
+                        onChange={() => handleToggleModule(feat.id)}
+                        disabled={isPending}
+                        className="mt-0.5 w-4 h-4 bg-transparent border-border text-primary focus:ring-0 focus:ring-offset-0 rounded-md cursor-pointer shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-foreground font-sans tracking-wide truncate">{feat.name}</p>
+                        <p className="text-[11px] text-gray-500 leading-normal mt-0.5">
+                          {feat.description}
+                        </p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
             </div>
 
             <button

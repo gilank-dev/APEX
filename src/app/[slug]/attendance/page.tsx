@@ -19,6 +19,7 @@ interface UserProfile {
 
 interface AttendanceLog {
   id: string
+  user_id: string
   clock_in_time: string
   clock_out_time: string | null
   photo_url: string | null
@@ -34,6 +35,7 @@ export default function AttendancePage() {
 
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [logs, setLogs] = useState<AttendanceLog[]>([])
+  const [shiftMap, setShiftMap] = useState<Record<string, string>>({})
   const [activeLog, setActiveLog] = useState<AttendanceLog | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -95,6 +97,22 @@ export default function AttendancePage() {
 
         const { data: logList } = await query
         if (logList) setLogs(logList as any[])
+
+        // Fetch shift assignments for company to display assigned shift names
+        const { data: assignments } = await supabase
+          .from('shift_assignments')
+          .select('user_id, assignment_date, shift_templates(name)')
+          .eq('company_id', uProfile.company_id)
+
+        if (assignments) {
+          const map: Record<string, string> = {}
+          assignments.forEach((a: any) => {
+            if (a.shift_templates?.name) {
+              map[`${a.user_id}_${a.assignment_date}`] = a.shift_templates.name
+            }
+          })
+          setShiftMap(map)
+        }
       }
     } catch (err) {
       console.error(err)
@@ -441,6 +459,7 @@ export default function AttendancePage() {
                 <thead>
                   <tr className="border-b border-border text-xs font-mono text-gray-500 uppercase tracking-wider">
                     <th className="py-2.5 px-3">Employee Name</th>
+                    <th className="py-2.5 px-3">Shift</th>
                     <th className="py-2.5 px-3">Date</th>
                     <th className="py-2.5 px-3">Clock In</th>
                     <th className="py-2.5 px-3">Clock Out</th>
@@ -450,6 +469,9 @@ export default function AttendancePage() {
                 <tbody className="text-xs divide-y divide-border">
                   {logs.map((log) => {
                     const isClockedOut = !!log.clock_out_time
+                    const dateOnly = new Date(log.clock_in_time).toISOString().split('T')[0]
+                    const shiftName = shiftMap[`${log.user_id}_${dateOnly}`]
+
                     return (
                       <tr
                         key={log.id}
@@ -458,6 +480,15 @@ export default function AttendancePage() {
                       >
                         <td className="py-3 px-3 font-sans text-gray-700 font-semibold">
                           {log.users?.full_name}
+                        </td>
+                        <td className="py-3 px-3">
+                          {shiftName ? (
+                            <span className="px-2 py-0.5 rounded font-mono text-[9px] uppercase font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                              {shiftName}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-mono text-gray-400">—</span>
+                          )}
                         </td>
                         <td className="py-3 px-3 font-mono text-gray-500">
                           {new Date(log.clock_in_time).toLocaleDateString()}
@@ -484,7 +515,7 @@ export default function AttendancePage() {
                   })}
                   {logs.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-gray-400 font-mono text-xs">
+                      <td colSpan={6} className="py-8 text-center text-gray-400 font-mono text-xs">
                         NO ATTENDANCE LOGS RECORDED TODAY
                       </td>
                     </tr>
@@ -568,9 +599,15 @@ export default function AttendancePage() {
                   )}
                 </div>
 
-                {/* Timestamp summary */}
+                {/* Timestamps and Shift summary */}
                 <div className="space-y-2">
-                  <h4 className="text-[10px] font-mono text-gray-450 uppercase">Timestamps</h4>
+                  <h4 className="text-[10px] font-mono text-gray-450 uppercase">Shift & Timestamps</h4>
+                  <div className="p-2.5 bg-gray-50 border border-border rounded-sm text-xs font-mono mb-2">
+                    <span className="text-[10px] text-gray-400 uppercase">Jadwal Shift:</span>
+                    <p className="text-gray-900 font-bold mt-0.5">
+                      {shiftMap[`${selectedLog.user_id}_${new Date(selectedLog.clock_in_time).toISOString().split('T')[0]}`] || 'Tidak ada jadwal shift'}
+                    </p>
+                  </div>
                   <div className="grid grid-cols-2 gap-4 text-xs font-mono">
                     <div className="p-2.5 bg-gray-50 border border-border rounded-sm">
                       <span className="text-[10px] text-gray-400 uppercase">Clock In</span>

@@ -28,6 +28,11 @@ export default function SidebarLinks({ slug, activeModules, isAdminOrManager, ca
       visible: activeModules.includes('attendance')
     },
     {
+      href: `/${slug}/shifts`,
+      label: 'Jadwal Shift',
+      visible: activeModules.includes('shifts')
+    },
+    {
       href: `/${slug}/tasks`,
       label: 'Task Board',
       visible: activeModules.includes('tasks')

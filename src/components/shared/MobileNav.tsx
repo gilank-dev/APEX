@@ -42,6 +42,11 @@ export default function MobileNav({
       visible: activeModules.includes('attendance')
     },
     {
+      href: `/${slug}/shifts`,
+      label: 'Jadwal Shift',
+      visible: activeModules.includes('shifts')
+    },
+    {
       href: `/${slug}/tasks`,
       label: 'Task Board',
       visible: activeModules.includes('tasks')
