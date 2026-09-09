@@ -88,3 +88,13 @@ Kalau 7 hari Rp 300rb ga menghasilkan 5 chat WA → matikan, evaluasi angle, jan
 
 - 20 outreach WA → 6 balesan (30%) → 2 demo → 1 trial → 1 bayar. Angka ini realistis utk warm path.
 - Kalau setelah 20 outreach dapet 0 demo, masalahnya penawaran atau targeting — bukan iklan.
+
+## Outreack Log (cold email batch 1 — 2026-09-08)
+
+| # | Target | Email | Angle | Status | Follow-up |
+|---|--------|-------|-------|--------|-----------|
+| 1 | Klinik Utama Medissina (Indramayu, 24 jam, 2 lokasi) | hrd.medissina@gmail.com | rekap absensi shift, lagi hire HR staff | SENT | H+3 (11 Sep) |
+| 2 | Klinik Utama Mitra Jalen Sehat (Banyuwangi) | hrd.mitrajalensehat@gmail.com | jadwal perawat bergilir, rekrut aktif | SENT | H+3 (11 Sep) |
+| 3 | Mixue Warakas (Jakarta) | hrd.mixuewarakas@gmail.com | crew shift + stok bahan baku | SENT | H+3 (11 Sep) |
+
+Sumber lead: iklan lowongan aktif (lokerperawat.com, carilokercirebon, jakartakerja). Pool lead cadangan: hrd.lifiyura (IG), hrd.nmc1@gmail.com (Klinik Rawat Jaya), riwangilaundry@gmail.com, kerenslaundry@gmail.com, recruitment.transstudiocibubur@gmail.com, Bellin Bakery (form, no email).
