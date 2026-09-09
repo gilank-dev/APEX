@@ -187,6 +187,7 @@ export default function AdminPage() {
                   {[
                     { id: 'attendance', name: 'Presensi & Kehadiran', description: 'Pencatatan absensi selfie dan rekap kehadiran' },
                     { id: 'shifts', name: 'Jadwal Shift & Roster (Pro)', description: 'Template shift bergilir dan pembagian roster mingguan' },
+                    { id: 'payroll', name: 'Payroll-Lite (Pro)', description: 'Kompilasi gaji otomatis berbasis rekap kehadiran & lembur' },
                     { id: 'tasks', name: 'Manajemen Tugas (Task Board)', description: 'Papan Kanban penugasan dan monitoring operasional' },
                     { id: 'inventory', name: 'Inventaris Stok', description: 'Pencatatan aset barang dan stok barang' },
                   ].map((mod) => (

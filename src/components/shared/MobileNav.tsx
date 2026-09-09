@@ -47,6 +47,11 @@ export default function MobileNav({
       visible: activeModules.includes('shifts')
     },
     {
+      href: `/${slug}/payroll`,
+      label: 'Payroll',
+      visible: activeModules.includes('payroll')
+    },
+    {
       href: `/${slug}/tasks`,
       label: 'Task Board',
       visible: activeModules.includes('tasks')
