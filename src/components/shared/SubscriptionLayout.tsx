@@ -46,57 +46,58 @@ export default function SubscriptionLayout({ company }: SubscriptionLayoutProps)
 
   const plans = [
     {
-      name: 'Free Tier',
-      description: 'For small teams initiating digital operations.',
+      name: 'Free',
+      description: 'Buat tim kecil yang baru mulai digitalisasi absensi.',
       price: 'Rp 0',
-      crossedOutPrice: 'Rp 99,000',
-      period: 'Forever',
+      crossedOutPrice: null,
+      period: 'selamanya',
       value: 'free',
       icon: <Shield className="w-5 h-5 text-gray-400" />,
       features: [
-        'Up to 15 Workspace Members',
-        '90-Day Attendance Log Retention',
-        'Access to Attendance & Task Board',
-        'Daily Automated Backups'
+        'Hingga 15 anggota tim',
+        'Riwayat absensi 90 hari',
+        'Absensi selfie + papan tugas',
+        'Support via WhatsApp'
       ],
-      cta: 'Activate Now',
+      cta: 'Paket Aktif',
       style: 'border-border bg-white text-gray-900'
     },
     {
-      name: 'Pro Tier',
-      description: 'Complete solution for field and office team efficiency.',
-      price: isYearly ? 'Rp 1,990,000' : 'Rp 249,000',
-      crossedOutPrice: isYearly ? 'Rp 2,988,000' : 'Rp 349,000',
-      period: isYearly ? 'Year' : 'Month',
+      name: 'Pro',
+      description: 'Bisnis berbasis shift yang butuh rekap gaji dan jadwal rapi.',
+      price: isYearly ? 'Rp 1.990.000' : 'Rp 249.000',
+      crossedOutPrice: isYearly ? 'Rp 2.988.000' : 'Rp 349.000',
+      period: isYearly ? 'tahun' : 'bulan',
       value: 'pro',
       icon: <Sparkles className="w-5 h-5 text-primary" />,
       features: [
-        'Up to 100 Workspace Members',
-        '1-Year Attendance Log Retention',
-        'Full Access to All Features',
-        'Priority WhatsApp Support',
-        'Overtime & Bonus Calculator'
+        'Hingga 100 anggota tim',
+        'Riwayat absensi 1 tahun',
+        'Payroll otomatis + slip gaji',
+        'Jadwal shift, cuti & tukar shift',
+        'Inventaris stok',
+        'Prioritas support WhatsApp'
       ],
-      cta: 'Upgrade to Pro',
+      cta: 'Upgrade ke Pro',
       recommended: true,
       style: 'border-primary bg-white text-gray-900 shadow-lg shadow-primary/5 ring-1 ring-primary/20'
     },
     {
-      name: 'Enterprise Tier',
-      description: 'Enterprise-grade security, unlimited scalability & performance.',
-      price: isYearly ? 'Rp 11,990,000' : 'Rp 1,499,000',
-      crossedOutPrice: isYearly ? 'Rp 17,988,000' : 'Rp 1,999,000',
-      period: isYearly ? 'Year' : 'Month',
+      name: 'Enterprise',
+      description: 'Untuk kebutuhan khusus, integrasi API, dan kapasitas tanpa batas.',
+      price: isYearly ? 'Rp 11.990.000' : 'Rp 1.499.000',
+      crossedOutPrice: isYearly ? 'Rp 17.988.000' : 'Rp 1.999.000',
+      period: isYearly ? 'tahun' : 'bulan',
       value: 'enterprise',
-      icon: <Zap className="w-5 h-5 text-amber-400 animate-pulse" />,
+      icon: <Zap className="w-5 h-5 text-amber-400" />,
       features: [
-        'Unlimited Workspace Members',
-        'Infinite Attendance Log Retention',
-        'All Features & Custom API Access',
-        '24/7 Support & Dedicated Account Manager',
-        'Isolated Tenant Sub-Node'
+        'Anggota tim tanpa batas',
+        'Riwayat absensi tanpa batas',
+        'Semua fitur + akses API',
+        'Integrasi webhook & custom',
+        'Koordinasi langsung dengan developer'
       ],
-      cta: 'Go Enterprise',
+      cta: 'Jadi Enterprise',
       dark: true,
       style: 'border-slate-800 bg-slate-950 text-white shadow-xl shadow-slate-950/20'
     }
@@ -126,13 +127,13 @@ export default function SubscriptionLayout({ company }: SubscriptionLayoutProps)
 
   return (
     <div className="space-y-8">
-      {/* Google AI Pro / Gemini-style Selector Header */}
+      {/* Header */}
       <div className="text-center space-y-4 max-w-2xl mx-auto">
         <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 md:text-4xl">
-          Choose the level of control that fits your operations.
+          Pilih paket sesuai kebutuhan tim kamu.
         </h2>
         <p className="text-sm text-gray-500 max-w-[55ch] mx-auto leading-relaxed">
-          All plans include bank-grade encryption, offline-first access, and daily backups.
+          Semua paket sudah termasuk isolasi data per perusahaan, mode offline, dan absen selfie.
         </p>
 
         {/* Monthly / Yearly Switch */}
@@ -143,7 +144,7 @@ export default function SubscriptionLayout({ company }: SubscriptionLayoutProps)
               !isYearly ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-800'
             }`}
           >
-            Monthly
+            Bulanan
           </button>
           <button
             onClick={() => setIsYearly(true)}
@@ -151,9 +152,9 @@ export default function SubscriptionLayout({ company }: SubscriptionLayoutProps)
               isYearly ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-800'
             }`}
           >
-            Yearly
-            <span className="bg-primary/10 text-primary text-[8px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider animate-bounce">
-              Save 33%
+            Tahunan
+            <span className="bg-primary/10 text-primary text-[8px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider">
+              Hemat 33%
             </span>
           </button>
         </div>
@@ -176,7 +177,7 @@ export default function SubscriptionLayout({ company }: SubscriptionLayoutProps)
             >
               {plan.recommended && (
                 <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 text-[9px] font-extrabold text-white bg-primary rounded-full uppercase tracking-widest shadow-sm">
-                  Most Popular
+                  Paling Laris
                 </span>
               )}
 
@@ -204,12 +205,12 @@ export default function SubscriptionLayout({ company }: SubscriptionLayoutProps)
                     )}
                     {plan.value !== 'free' && isYearly && (
                       <span className="bg-green-100 text-green-700 text-[8px] font-bold px-1.5 py-0.5 rounded-[2px] uppercase tracking-wider animate-pulse">
-                        Best Value (Save 33%)
+                        Paling Hemat
                       </span>
                     )}
                     {plan.value === 'free' && (
                       <span className="bg-orange-100 text-primary text-[8px] font-bold px-1.5 py-0.5 rounded-[2px] uppercase tracking-wider">
-                        100% Free Gift
+                        Gratis Selamanya
                       </span>
                     )}
                   </div>
@@ -251,7 +252,15 @@ export default function SubscriptionLayout({ company }: SubscriptionLayoutProps)
                     disabled
                     className="w-full text-center py-3 bg-green-50 border border-green-200 text-green-600 font-mono text-xs uppercase rounded-[4px] font-bold tracking-wider"
                   >
-                    Active Now
+                    Paket Sedang Aktif
+                  </button>
+                ) : plan.value === 'free' ? (
+                  <button
+                    disabled
+                    title="Downgrade ke Free lewat WhatsApp"
+                    className="w-full text-center py-3 bg-gray-50 border border-border text-gray-400 font-mono text-xs uppercase rounded-[4px] font-bold tracking-wider"
+                  >
+                    Paket Free
                   </button>
                 ) : (
                   <button

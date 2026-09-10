@@ -8,16 +8,21 @@ export interface Feature {
   placeholderText?: string
 }
 
+// Catatan penting: modul "Fitur Industri" di bawah adalah widget demo/preview
+// interaktif (data tersimpan lokal di browser). KPI yang tampil adalah contoh
+// format, bukan data operasional perusahaan Anda. Untuk fitur inti (absensi,
+// payroll, shift, cuti, inventaris), gunakan modul utama di sidebar.
+
 export const CATEGORY_FEATURES: Record<string, Feature[]> = {
   corporate: [
     {
       id: 'leave',
       name: 'Cuti & Izin',
-      description: 'Pengajuan cuti/izin/sakit karyawan dengan persetujuan admin',
+      description: 'Pengajuan cuti/izin/sakit karyawan dengan persetujuan admin dan catatan lengkap',
       kpis: [
-        { label: 'Pending Requests', value: '0 Items' },
-        { label: 'Approval Rate', value: '100%' },
-        { label: 'Avg SLA', value: '2 Hours' }
+        { label: 'Pengajuan', value: 'Real-time' },
+        { label: 'Persetujuan', value: 'Bertingkat' },
+        { label: 'Riwayat', value: 'Tersimpan' }
       ],
       actionLabel: 'Kelola Pengajuan Cuti',
       actionSuccessMessage: 'Pengajuan cuti berhasil diproses.'
@@ -25,253 +30,237 @@ export const CATEGORY_FEATURES: Record<string, Feature[]> = {
     {
       id: 'payroll-engine',
       name: 'Payroll Engine',
-      description: 'Calculates basic salary, allowances, and tax deductions (PPh 21 equivalent) automatically on the server-side (Cron / Edge Functions) based on monthly employee attendance.',
+      description: 'Kompilasi gaji, tunjangan, dan potongan otomatis berbasis rekap kehadiran bulanan karyawan',
       kpis: [
-        { label: 'Payroll Processed', value: '$32K / Mo' },
-        { label: 'Insurance Sync', value: 'Connected' },
-        { label: 'Tax Filings', value: 'Completed' }
+        { label: 'Perhitungan', value: 'Otomatis' },
+        { label: 'Slip Gaji', value: 'Per Karyawan' },
+        { label: 'Ekspor', value: 'CSV' }
       ],
-      actionLabel: 'Run Payroll Calculation',
-      actionSuccessMessage: 'Payroll calculation completed successfully. Salary slips are ready for review.'
+      actionLabel: 'Jalankan Perhitungan Gaji',
+      actionSuccessMessage: 'Perhitungan gaji selesai. Slip gaji siap ditinjau.'
     },
     {
       id: 'live-attendance-selfie',
       name: 'Live Attendance Selfie',
-      description: 'Employee attendance clock-in utilizing front-facing camera selfies. Fully excludes GPS location tracking for privacy and lightweight execution.',
+      description: 'Absensi karyawan dengan verifikasi selfie kamera depan, ringan dan menjaga privasi',
       kpis: [
-        { label: 'Present Today', value: '96.4%' },
-        { label: 'Selfie Match Rate', value: '100%' },
-        { label: 'Average Clock-In', value: '07:54 AM' }
+        { label: 'Verifikasi', value: 'Selfie' },
+        { label: 'Absen', value: '10 Detik' },
+        { label: 'Anti Titip', value: 'Ya' }
       ],
-      actionLabel: 'Verify Selfie & Clock In',
-      actionSuccessMessage: 'Selfie verification successful. Attendance logged.'
+      actionLabel: 'Verifikasi Selfie & Absen',
+      actionSuccessMessage: 'Verifikasi selfie berhasil. Kehadiran tercatat.'
     },
     {
       id: 'multi-tier-approval',
-      name: 'Multi-Tier Approval',
-      description: 'Multi-level document approval workflow (Staff -> Manager -> Director) secured with database Row Level Security (RLS) policies.',
+      name: 'Alur Persetujuan Bertingkat',
+      description: 'Alur persetujuan dokumen berjenjang (Staff → Manager → Direksi) dengan keamanan RLS',
       kpis: [
-        { label: 'Pending Approvals', value: '3 Items' },
-        { label: 'SLA Response Time', value: '28 Mins' },
-        { label: 'Approved Work Items', value: '142 Items' }
+        { label: 'Alur', value: 'Bertingkat' },
+        { label: 'Keamanan', value: 'RLS' },
+        { label: 'Riwayat', value: 'Lengkap' }
       ],
-      actionLabel: 'Process Approval Queue',
-      actionSuccessMessage: 'Document approved and routed to the next tier.'
+      actionLabel: 'Proses Antrean Persetujuan',
+      actionSuccessMessage: 'Dokumen disetujui dan diteruskan ke jenjang berikutnya.'
     }
   ],
   school: [
     {
       id: 'student-database',
-      name: 'Student Database',
-      description: 'Centralized repository for Student IDs, personal data, grade history, and parent contacts. Features a fast 300ms debounced search and DOM virtualization.',
+      name: 'Database Siswa',
+      description: 'Penyimpanan terpusat ID siswa, data diri, riwayat nilai, dan kontak orang tua dengan pencarian cepat',
       kpis: [
-        { label: 'Total Students', value: '450' },
-        { label: 'Active Students', value: '448' },
-        { label: 'Registered Classes', value: '15' }
+        { label: 'Pencarian', value: 'Cepat' },
+        { label: 'Data Siswa', value: 'Terpusat' },
+        { label: 'Kontak Ortu', value: 'Terhubung' }
       ],
-      actionLabel: 'Search Student Database',
-      actionSuccessMessage: 'Student database query updated.',
-      placeholderText: 'Enter student name or ID...'
+      actionLabel: 'Cari Database Siswa',
+      actionSuccessMessage: 'Pencarian database siswa diperbarui.',
+      placeholderText: 'Nama siswa atau NIS...'
     },
     {
       id: 'tuition-billing',
-      name: 'Tuition (SPP) Billing',
-      description: 'Automatic tuition invoicing on the 1st of every month with integrated WhatsApp notification alerts and payment gateway webhook tracking.',
+      name: 'Tagihan SPP',
+      description: 'Catat pembayaran SPP tiap bulan dengan status lunas/belum dan riwayat lengkap',
       kpis: [
-        { label: 'Tuition Settled', value: '92%' },
-        { label: 'Outstanding Balance', value: '38 Students' },
-        { label: 'Total Revenue', value: '$15K' }
+        { label: 'Tagihan', value: 'Bulanan' },
+        { label: 'Status', value: 'Lunas / Belum' },
+        { label: 'Riwayat', value: 'Per Siswa' }
       ],
-      actionLabel: 'Broadcast Bills via WhatsApp',
-      actionSuccessMessage: 'Tuition invoices and payment links broadcasted to parents via WhatsApp.'
+      actionLabel: 'Catat Pembayaran SPP',
+      actionSuccessMessage: 'Pembayaran SPP tercatat.'
     },
     {
       id: 'grade-book-system',
-      name: 'Grade Book System',
-      description: 'Spreadsheet-like inline grade entry interface for teachers with optimistic UI background auto-saving to prevent data loss.',
+      name: 'Buku Nilai',
+      description: 'Input nilai per kelas dengan penyimpanan otomatis anti hilang',
       kpis: [
-        { label: 'Class Average', value: '82.4' },
-        { label: 'Report Cards Ready', value: '15 Classes' },
-        { label: 'Grades Inputted', value: '88%' }
+        { label: 'Input', value: 'Per Kelas' },
+        { label: 'Auto-save', value: 'Aktif' },
+        { label: 'Rapor', value: 'Siap Cetak' }
       ],
-      actionLabel: 'Compute Report Grades',
-      actionSuccessMessage: 'Report card grades computed and auto-saved successfully.'
+      actionLabel: 'Hitung Nilai Rapor',
+      actionSuccessMessage: 'Nilai rapor terhitung dan tersimpan otomatis.'
     },
     {
       id: 'teacher-scheduling',
-      name: 'Teacher Scheduling',
-      description: 'Conflict-free teacher timetable builder with automated clash checking on the API server and weekly slot grids.',
+      name: 'Jadwal Mengajar',
+      description: 'Susun jadwal mengajar guru dengan pengecekan bentrok otomatis',
       kpis: [
-        { label: 'Teaching Hours', value: '420 Hrs / Wk' },
-        { label: 'Scheduled Teachers', value: '38' },
-        { label: 'Schedule Conflicts', value: '0 Cases' }
+        { label: 'Bentrok', value: 'Otomatis Dicek' },
+        { label: 'Jadwal', value: 'Mingguan' },
+        { label: 'Tampilan', value: 'Grid' }
       ],
-      actionLabel: 'Validate Timetable Conflicts',
-      actionSuccessMessage: 'Timetable check complete: Zero scheduling conflicts detected.'
+      actionLabel: 'Validasi Jadwal',
+      actionSuccessMessage: 'Pengecekan jadwal selesai: tidak ada bentrok.'
     }
   ],
   fnb: [
     {
       id: 'cash-drawer-audit',
-      name: 'Cash Drawer Audit',
-      description: 'Digital cash drawer reconciliation at the end of every cashier shift with Blind Balance inputs to prevent employee bias.',
+      name: 'Audit Kasir',
+      description: 'Rekonsiliasi kasir di akhir shift dengan input saldo untuk mencegah bias',
       kpis: [
-        { label: 'Audited Sessions', value: '2 / Day' },
-        { label: 'Cash Variance', value: '$0.00' },
-        { label: 'Drawer Status', value: 'Reconciled' }
+        { label: 'Rekonsiliasi', value: 'Per Shift' },
+        { label: 'Selisih Kas', value: 'Tercatat' },
+        { label: 'Riwayat', value: 'Lengkap' }
       ],
-      actionLabel: 'Submit Cash Audit Log',
-      actionSuccessMessage: 'Cash drawer audit log reconciled successfully with POS ledger.'
+      actionLabel: 'Kirim Log Audit Kas',
+      actionSuccessMessage: 'Log audit kasir tersimpan.'
     },
     {
       id: 'fifo-inventory',
-      name: 'FIFO Inventory (Raw Materials)',
-      description: 'Raw ingredients expiration tracking by batch sequence (First In, First Out) utilizing SQL stored procedures for minimal latency.',
+      name: 'Inventaris FIFO (Bahan Baku)',
+      description: 'Lacak kedaluwarsa bahan baku berdasarkan urutan masuk (First In, First Out)',
       kpis: [
-        { label: 'Monitored Ingredients', value: '124 Items' },
-        { label: 'Expired Batches', value: '0 Items' },
-        { label: 'Critical Stock Items', value: '3 Items' }
+        { label: 'Bahan', value: 'Per Batch' },
+        { label: 'Kedaluwarsa', value: 'Dipantau' },
+        { label: 'Stok Kritis', value: 'Peringatan' }
       ],
-      actionLabel: 'Scan Expiration Batches',
-      actionSuccessMessage: 'FIFO inventory records updated. Expiration alerts verified.'
+      actionLabel: 'Pindai Batch Kedaluwarsa',
+      actionSuccessMessage: 'Data inventaris FIFO diperbarui.'
     },
     {
       id: 'dynamic-roster',
-      name: 'Dynamic Roster',
-      description: 'Shift roster scheduler (Morning, Afternoon, Night) with responsive touch-friendly drag-and-drop support designed for tablet screens.',
+      name: 'Roster Dinamis',
+      description: 'Pembagi jadwal shift (Pagi, Siang, Malam) dengan tampilan responsif untuk tablet',
       kpis: [
-        { label: 'Active Shifts', value: '3 / Day' },
-        { label: 'Scheduled Crew', value: '12 Staff' },
-        { label: 'Roster Status', value: 'Assigned' }
+        { label: 'Shift', value: '3 Rentang' },
+        { label: 'Drag & Drop', value: 'Ya' },
+        { label: 'Perangkat', value: 'Tablet' }
       ],
-      actionLabel: 'Save Shift Schedule',
-      actionSuccessMessage: 'Weekly shift roster saved and published to the employee portal.'
+      actionLabel: 'Simpan Jadwal Shift',
+      actionSuccessMessage: 'Jadwal shift mingguan tersimpan.'
     }
   ],
   retail: [
     {
       id: 'live-sku-tracking',
-      name: 'Live SKU Tracking',
-      description: 'Real-time stock level monitoring for product entries and sales using WebSockets (Supabase Realtime).',
+      name: 'Pelacakan SKU',
+      description: 'Pantau level stok barang masuk dan keluar secara real-time',
       kpis: [
-        { label: 'Active SKUs', value: '8,900' },
-        { label: 'Stock Turnover', value: '12.4 Days' },
-        { label: 'Low Stock Warnings', value: '3 SKUs' }
+        { label: 'Stok', value: 'Real-time' },
+        { label: 'Barang', value: 'Per SKU' },
+        { label: 'Stok Menipis', value: 'Peringatan' }
       ],
-      actionLabel: 'Connect Realtime Stream',
-      actionSuccessMessage: 'WebSocket connected. Realtime SKU tracking streams are active.'
+      actionLabel: 'Aktifkan Pelacakan',
+      actionSuccessMessage: 'Pelacakan SKU aktif.'
     },
     {
       id: 'stock-opname',
       name: 'Stock Opname (Audit)',
-      description: 'Offline-first stock taking module powered by IndexedDB / localStorage for warehouses with low Wi-Fi coverage.',
+      description: 'Penghitungan stok offline-first untuk gudang dengan sinyal Wi-Fi lemah',
       kpis: [
-        { label: 'Audited Items', value: '94.2%' },
-        { label: 'Offline Sync Queue', value: '0 Items' },
-        { label: 'Audit Discrepancies', value: '2 Pcs' }
+        { label: 'Mode', value: 'Offline-first' },
+        { label: 'Sinkronisasi', value: 'Otomatis' },
+        { label: 'Selisih', value: 'Tercatat' }
       ],
-      actionLabel: 'Start Offline Audit Session',
-      actionSuccessMessage: 'Stock count synchronized successfully with the database server.'
+      actionLabel: 'Mulai Sesi Stock Opname',
+      actionSuccessMessage: 'Hasil hitung stok tersinkron.'
     },
     {
       id: 'cashier-shift-handover',
-      name: 'Cashier Shift Handover',
-      description: 'Secure cashier session closing, cart clearing, and JWT token invalidation for next shift login to prevent session theft.',
+      name: 'Serah Terima Kasir',
+      description: 'Tutup sesi kasir dengan catatan serah terima yang jelas untuk shift berikutnya',
       kpis: [
-        { label: 'Last Handover', value: '03:00 PM' },
-        { label: 'Active Cashier', value: 'Rani Wijaya' },
-        { label: 'Audit Trail', value: 'Cleared' }
+        { label: 'Sesi', value: 'Tertutup' },
+        { label: 'Serah Terima', value: 'Tercatat' },
+        { label: 'Keamanan', value: 'Rapi' }
       ],
-      actionLabel: 'Trigger Shift Handover',
-      actionSuccessMessage: 'Cashier session closed. Terminal locked for the next incoming operator.'
+      actionLabel: 'Tutup Sesi Kasir',
+      actionSuccessMessage: 'Sesi kasir ditutup dan serah terima tercatat.'
     }
   ],
   clinic: [
     {
       id: 'lite-emr',
-      name: 'Lite EMR (Medical Record)',
-      description: 'Encrypted Electronic Medical Records (EMR) database capturing anamnesis, prescriptions, and ICD-10 codes, protected by doctor-only RLS access policies.',
+      name: 'Rekam Medis Ringan',
+      description: 'Catat kunjungan pasien, diagnosis, dan tindakan dengan pencarian cepat',
       kpis: [
-        { label: 'Medical Records', value: '1,240 Logs' },
-        { label: 'Encryption Standard', value: 'HTTPS / AES' },
-        { label: 'Access Audit Logs', value: 'Completed' }
+        { label: 'Kunjungan', value: 'Tercatat' },
+        { label: 'Pencarian', value: 'Cepat' },
+        { label: 'Privasi', value: 'Isolasi Data' }
       ],
-      actionLabel: 'Decrypt EMR Records',
-      actionSuccessMessage: 'Electronic Medical Record decrypted and opened securely.'
+      actionLabel: 'Buka Rekam Medis',
+      actionSuccessMessage: 'Rekam medis diperbarui.'
     },
     {
       id: 'prescription-tracker',
-      name: 'Prescription Tracker',
-      description: 'Real-time digital prescription pipeline sending doctor inputs directly to the pharmacy dispatch queue via WebSockets.',
+      name: 'Pelacak Resep',
+      description: 'Pantau resep yang diberikan dan status pemenuhannya',
       kpis: [
-        { label: 'Pharmacy Queue', value: '2 Sessions' },
-        { label: 'Prep Time Average', value: '4.2 Mins' },
-        { label: 'Prescriptions Dispensed', value: '42' }
+        { label: 'Resep', value: 'Terpantau' },
+        { label: 'Status', value: 'Dipenuhi / Menunggu' },
+        { label: 'Riwayat', value: 'Per Pasien' }
       ],
-      actionLabel: 'Transmit Digital Rx',
-      actionSuccessMessage: 'Digital prescription transmitted to the pharmacy queue.'
+      actionLabel: 'Perbarui Status Resep',
+      actionSuccessMessage: 'Status resep diperbarui.'
     },
     {
       id: 'patient-queue-system',
-      name: 'Patient Queue System',
-      description: 'Patient intake queue manager with real-time waiting lobby monitor display and browser-native text-to-speech calls.',
+      name: 'Antrean Pasien',
+      description: 'Kelola antrean pasien dengan nomor urut dan estimasi tunggu',
       kpis: [
-        { label: 'Registered Today', value: '28 Patients' },
-        { label: 'Average Wait Time', value: '12 Mins' },
-        { label: 'Active Ticket', value: 'A-12' }
+        { label: 'Antrean', value: 'Real-time' },
+        { label: 'Nomor Urut', value: 'Otomatis' },
+        { label: 'Estimasi', value: 'Tampil' }
       ],
-      actionLabel: 'Announce Next Ticket',
-      actionSuccessMessage: 'Lobby announcement triggered: "Ticket A-12 please proceed to Doctor Consultation room".'
-    },
-    {
-      id: 'insurance-billing-flow',
-      name: 'Insurance Billing Flow',
-      description: 'BPJS/insurance claim processing system with cloud attachment uploads and API-ready XML/JSON export capabilities.',
-      kpis: [
-        { label: 'Submission Rate', value: '88%' },
-        { label: 'Pending Claims', value: '$3K' },
-        { label: 'Lab Attachments', value: 'Verified' }
-      ],
-      actionLabel: 'Compile Claim Document',
-      actionSuccessMessage: 'Insurance claim document XML compiled and downloaded.'
+      actionLabel: 'Panggil Pasien Berikutnya',
+      actionSuccessMessage: 'Pasien berikutnya dipanggil.'
     }
   ],
   ngo: [
     {
       id: 'fund-allocation-tracker',
-      name: 'Fund Allocation Tracker',
-      description: 'Interactive donut-chart dashboard highlighting donor fund distribution (logistics, operational, medical).',
+      name: 'Pelacak Alokasi Dana',
+      description: 'Catat alokasi dana program dengan status pencairan per kegiatan',
       kpis: [
-        { label: 'Managed Capital', value: '$100K' },
-        { label: 'Public Transparency', value: 'Audited' },
-        { label: 'Total Donations', value: '$800K' }
+        { label: 'Dana', value: 'Per Program' },
+        { label: 'Pencairan', value: 'Tercatat' },
+        { label: 'Laporan', value: 'Ringkas' }
       ],
-      actionLabel: 'Generate Allocation PDF',
-      actionSuccessMessage: 'Allocation report PDF generated for public transparency review.'
+      actionLabel: 'Catat Alokasi Dana',
+      actionSuccessMessage: 'Alokasi dana tercatat.'
     },
-    {
-      id: 'donor-crm',
-      name: 'Donor CRM',
-      description: 'Donor relationship manager with Lifetime Value (LTV) logs, integrated with transactional thank-you emails via Resend/SendGrid.',
-      kpis: [
-        { label: 'Recurring Donors', value: '64' },
-        { label: 'LTV CRM Growth', value: '+18.5%' },
-        { label: 'Receipt Emails Sent', value: '100%' }
+    { id: 'donor-crm', name: 'CRM Donatur', description: 'Kelola data donatur dan riwayat kontribusi', kpis: [
+        { label: 'Donatur', value: 'Terdata' },
+        { label: 'Kontribusi', value: 'Per Orang' },
+        { label: 'Kontak', value: 'Tersimpan' }
       ],
-      actionLabel: 'Sync Donor Records',
-      actionSuccessMessage: 'Donor CRM databases synced successfully.'
+      actionLabel: 'Tambah Donatur',
+      actionSuccessMessage: 'Donatur baru tercatat.'
     },
     {
       id: 'beneficiary-database',
-      name: 'Beneficiary Database',
-      description: 'Beneficiary identity database featuring regex validation to prevent duplicate aid claims in disaster relief zones.',
+      name: 'Database Penerima Manfaat',
+      description: 'Data penerima manfaat program dengan status verifikasi',
       kpis: [
-        { label: 'Beneficiaries Registered', value: '450' },
-        { label: 'ID Check Status', value: '100% Valid' },
-        { label: 'Aid Distributed', value: '98%' }
+        { label: 'Penerima', value: 'Terdata' },
+        { label: 'Verifikasi', value: 'Tercatat' },
+        { label: 'Program', value: 'Terhubung' }
       ],
-      actionLabel: 'Register New Beneficiary',
-      actionSuccessMessage: 'Beneficiary registered successfully. ID checked and clean.'
+      actionLabel: 'Tambah Penerima',
+      actionSuccessMessage: 'Penerima manfaat tercatat.'
     }
-  ]
+  ],
 }
