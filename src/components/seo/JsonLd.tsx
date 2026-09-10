@@ -24,11 +24,9 @@ export default function JsonLd() {
       'Low-Stock SKU Telemetry Tracking',
       'Fail-Closed HMAC-Verified Webhooks',
     ],
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: '4.9',
-      reviewCount: '128',
-    },
+    // No aggregateRating: self-serving review markup violates Google's
+    // structured data guidelines and risks a manual action. Revisit only
+    // once genuine first-party reviews exist.
   }
 
   const localBusinessSchema = {
