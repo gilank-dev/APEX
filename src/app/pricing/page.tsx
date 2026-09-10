@@ -118,8 +118,8 @@ export default function PricingPage() {
         <div className="flex gap-x-12 w-max animate-marquee whitespace-nowrap text-[10px] font-mono font-bold uppercase tracking-wider select-none">
           {[1, 2, 3].map((_, idx) => (
             <span key={idx} className="flex items-center gap-x-12">
-              <span>Apex Campaign 2026 // Upgrade the Speed and Accuracy of Your Enterprise Operations</span>
-              <span className="text-white/40">//</span>
+              <span>Apex Campaign 2026 • Absensi Selfie, Payroll Otomatis, dan Inventaris dalam Satu Aplikasi</span>
+              <span className="text-white/40">•</span>
             </span>
           ))}
         </div>

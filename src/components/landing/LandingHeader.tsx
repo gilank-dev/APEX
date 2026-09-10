@@ -37,12 +37,6 @@ export default function LandingHeader() {
             >
               Solusi
             </button>
-            <button 
-              onMouseEnter={() => setActiveMenu('resources')}
-              className={`hover:text-primary transition-colors cursor-pointer ${activeMenu === 'resources' ? 'text-primary font-bold' : ''}`}
-            >
-              Resources
-            </button>
             <Link
               href="/pricing"
               onMouseEnter={() => setActiveMenu(null)}
@@ -58,7 +52,7 @@ export default function LandingHeader() {
             href="/login"
             className="px-3 py-1.5 text-xs font-semibold text-gray-700 hover:text-foreground transition-colors cursor-pointer"
           >
-            Sign In
+            Masuk
           </Link>
           <Link
             href="/register"
@@ -103,7 +97,7 @@ export default function LandingHeader() {
                 onClick={() => setIsMobileMenuOpen(false)} 
                 className="hover:text-primary py-2 border-b border-gray-100 font-bold"
               >
-                Solusi
+                Tentang Kami
               </Link>
               <Link 
                 href="/pricing" 
@@ -112,13 +106,6 @@ export default function LandingHeader() {
               >
                 Harga
               </Link>
-              <Link 
-                href="#tentang-kami" 
-                onClick={() => setIsMobileMenuOpen(false)} 
-                className="hover:text-primary py-2 border-b border-gray-100 font-bold"
-              >
-                Tentang Kami
-              </Link>
             </div>
             <div className="flex flex-col gap-2 pt-2 border-t border-gray-100">
               <Link
@@ -126,7 +113,7 @@ export default function LandingHeader() {
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="w-full py-2.5 text-center text-xs font-bold text-gray-600 border border-border hover:bg-gray-50 rounded-[2px] font-mono uppercase"
               >
-                Sign In
+                Masuk
               </Link>
               <Link
                 href="/register"
@@ -153,52 +140,52 @@ export default function LandingHeader() {
             {activeMenu === 'fitur' && (
               <>
                 <div className="space-y-4">
-                  <h4 className="text-[10px] font-mono text-gray-400 uppercase tracking-widest border-b border-border pb-1.5">Core Features</h4>
+                  <h4 className="text-[10px] font-mono text-gray-400 uppercase tracking-widest border-b border-border pb-1.5">Absensi</h4>
                   <div className="space-y-3">
                     <div className="group cursor-pointer">
-                      <Link href="/register" className="block">
-                        <p className="text-xs font-bold text-gray-900 group-hover:text-primary transition-colors uppercase">Payroll Engine</p>
-                        <p className="text-[10px] text-gray-500 mt-0.5 normal-case leading-snug">Compute allowances, tax, and insurance automatically.</p>
+                      <Link href="#fitur" className="block">
+                        <p className="text-xs font-bold text-gray-900 group-hover:text-primary transition-colors uppercase">Absensi Selfie</p>
+                        <p className="text-[10px] text-gray-500 mt-0.5 normal-case leading-snug">Verifikasi selfie plus titik lokasi GPS, anti titip absen.</p>
                       </Link>
                     </div>
                     <div className="group cursor-pointer">
-                      <Link href="/register" className="block">
-                        <p className="text-xs font-bold text-gray-900 group-hover:text-primary transition-colors uppercase">Payroll Reports</p>
-                        <p className="text-[10px] text-gray-500 mt-0.5 normal-case leading-snug">Access high-fidelity records for fast audits.</p>
+                      <Link href="#fitur" className="block">
+                        <p className="text-xs font-bold text-gray-900 group-hover:text-primary transition-colors uppercase">Rekap Kehadiran</p>
+                        <p className="text-[10px] text-gray-500 mt-0.5 normal-case leading-snug">Rekap bulanan jam kerja, keterlambatan, dan lembur otomatis.</p>
                       </Link>
                     </div>
                   </div>
                 </div>
                 <div className="space-y-4">
-                  <h4 className="text-[10px] font-mono text-gray-400 uppercase tracking-widest border-b border-border pb-1.5">Payouts & Slips</h4>
+                  <h4 className="text-[10px] font-mono text-gray-400 uppercase tracking-widest border-b border-border pb-1.5">Gaji</h4>
                   <div className="space-y-3">
                     <div className="group cursor-pointer">
-                      <Link href="/register" className="block">
-                        <p className="text-xs font-bold text-gray-900 group-hover:text-primary transition-colors uppercase">Direct Deposit</p>
-                        <p className="text-[10px] text-gray-500 mt-0.5 normal-case leading-snug">Automate bank transfers to thousands of employees in one click.</p>
+                      <Link href="#fitur" className="block">
+                        <p className="text-xs font-bold text-gray-900 group-hover:text-primary transition-colors uppercase">Payroll Otomatis</p>
+                        <p className="text-[10px] text-gray-500 mt-0.5 normal-case leading-snug">Kompilasi gaji berbasis rekap kehadiran dan lembur.</p>
                       </Link>
                     </div>
                     <div className="group cursor-pointer">
-                      <Link href="/register" className="block">
-                        <p className="text-xs font-bold text-gray-900 group-hover:text-primary transition-colors uppercase">Digital Payslips</p>
-                        <p className="text-[10px] text-gray-500 mt-0.5 normal-case leading-snug">Secure e-slips dispatched directly to the employee portal.</p>
+                      <Link href="#fitur" className="block">
+                        <p className="text-xs font-bold text-gray-900 group-hover:text-primary transition-colors uppercase">Slip Gaji Digital</p>
+                        <p className="text-[10px] text-gray-500 mt-0.5 normal-case leading-snug">Slip gaji per karyawan bisa dibuka langsung dari aplikasi.</p>
                       </Link>
                     </div>
                   </div>
                 </div>
                 <div className="space-y-4">
-                  <h4 className="text-[10px] font-mono text-gray-400 uppercase tracking-widest border-b border-border pb-1.5">Claims & Expenses</h4>
+                  <h4 className="text-[10px] font-mono text-gray-400 uppercase tracking-widest border-b border-border pb-1.5">Operasional</h4>
                   <div className="space-y-3">
                     <div className="group cursor-pointer">
-                      <Link href="/register" className="block">
-                        <p className="text-xs font-bold text-gray-900 group-hover:text-primary transition-colors uppercase">Reimbursement Logs</p>
-                        <p className="text-[10px] text-gray-500 mt-0.5 normal-case leading-snug">Approve and disburse claims with single-action workflows.</p>
+                      <Link href="#fitur" className="block">
+                        <p className="text-xs font-bold text-gray-900 group-hover:text-primary transition-colors uppercase">Tugas & Inventaris</p>
+                        <p className="text-[10px] text-gray-500 mt-0.5 normal-case leading-snug">Papan tugas tim dan catat stok barang dari satu tempat.</p>
                       </Link>
                     </div>
                     <div className="group cursor-pointer">
-                      <Link href="/register" className="block">
-                        <p className="text-xs font-bold text-gray-900 group-hover:text-primary transition-colors uppercase">Travel Allowance</p>
-                        <p className="text-[10px] text-gray-500 mt-0.5 normal-case leading-snug">Request and log business trip travel expenses directly.</p>
+                      <Link href="#fitur" className="block">
+                        <p className="text-xs font-bold text-gray-900 group-hover:text-primary transition-colors uppercase">Cuti & Tukar Shift</p>
+                        <p className="text-[10px] text-gray-500 mt-0.5 normal-case leading-snug">Pengajuan cuti dengan approval dan pertukaran shift antar karyawan.</p>
                       </Link>
                     </div>
                   </div>
@@ -209,108 +196,52 @@ export default function LandingHeader() {
             {activeMenu === 'solusi' && (
               <>
                 <div className="space-y-4">
-                  <h4 className="text-[10px] font-mono text-gray-400 uppercase tracking-widest border-b border-border pb-1.5">By Industry</h4>
+                  <h4 className="text-[10px] font-mono text-gray-400 uppercase tracking-widest border-b border-border pb-1.5">Untuk Bisnis</h4>
                   <div className="space-y-3">
                     <div className="group cursor-pointer">
-                      <Link href="/register" className="block">
-                        <p className="text-xs font-bold text-gray-900 group-hover:text-primary transition-colors uppercase">Hospitality</p>
-                        <p className="text-[10px] text-gray-500 mt-0.5 normal-case leading-snug">Dynamic shifts and front-camera attendance logs.</p>
+                      <Link href="#fitur" className="block">
+                        <p className="text-xs font-bold text-gray-900 group-hover:text-primary transition-colors uppercase">Retail & Kuliner</p>
+                        <p className="text-[10px] text-gray-500 mt-0.5 normal-case leading-snug">Shift pagi-malam dan absensi karyawan cabang.</p>
                       </Link>
                     </div>
                     <div className="group cursor-pointer">
-                      <Link href="/register" className="block">
-                        <p className="text-xs font-bold text-gray-900 group-hover:text-primary transition-colors uppercase">Retail & Commerce</p>
-                        <p className="text-[10px] text-gray-500 mt-0.5 normal-case leading-snug">Distributed staff monitoring and overtime loggers.</p>
+                      <Link href="#fitur" className="block">
+                        <p className="text-xs font-bold text-gray-900 group-hover:text-primary transition-colors uppercase">Bengkel & Jasa</p>
+                        <p className="text-[10px] text-gray-500 mt-0.5 normal-case leading-snug">Rekap kehadiran teknisi dan stok spare part.</p>
                       </Link>
                     </div>
                   </div>
                 </div>
                 <div className="space-y-4">
-                  <h4 className="text-[10px] font-mono text-gray-400 uppercase tracking-widest border-b border-border pb-1.5">Business Scale</h4>
+                  <h4 className="text-[10px] font-mono text-gray-400 uppercase tracking-widest border-b border-border pb-1.5">Skala Tim</h4>
                   <div className="space-y-3">
                     <div className="group cursor-pointer">
-                      <Link href="/register" className="block">
-                        <p className="text-xs font-bold text-gray-900 group-hover:text-primary transition-colors uppercase">Enterprise</p>
-                        <p className="text-[10px] text-gray-500 mt-0.5 normal-case leading-snug">Row Level Security (RLS) active across every entity.</p>
+                      <Link href="/pricing" className="block">
+                        <p className="text-xs font-bold text-gray-900 group-hover:text-primary transition-colors uppercase">Tim Kecil</p>
+                        <p className="text-[10px] text-gray-500 mt-0.5 normal-case leading-snug">Gratis sampai 15 anggota, selamanya.</p>
                       </Link>
                     </div>
                     <div className="group cursor-pointer">
-                      <Link href="/register" className="block">
-                        <p className="text-xs font-bold text-gray-900 group-hover:text-primary transition-colors uppercase">Startups & SMBs</p>
-                        <p className="text-[10px] text-gray-500 mt-0.5 normal-case leading-snug">Flexible pricing tiers and rapid node activation.</p>
+                      <Link href="/pricing" className="block">
+                        <p className="text-xs font-bold text-gray-900 group-hover:text-primary transition-colors uppercase">Tim Menengah</p>
+                        <p className="text-[10px] text-gray-500 mt-0.5 normal-case leading-snug">Paket Pro untuk sampai 100 anggota dengan payroll penuh.</p>
                       </Link>
                     </div>
                   </div>
                 </div>
                 <div className="space-y-4">
-                  <h4 className="text-[10px] font-mono text-gray-400 uppercase tracking-widest border-b border-border pb-1.5">By Role</h4>
+                  <h4 className="text-[10px] font-mono text-gray-400 uppercase tracking-widest border-b border-border pb-1.5">Peran</h4>
                   <div className="space-y-3">
                     <div className="group cursor-pointer">
-                      <Link href="/register" className="block">
-                        <p className="text-xs font-bold text-gray-900 group-hover:text-primary transition-colors uppercase">For HR Managers</p>
-                        <p className="text-[10px] text-gray-500 mt-0.5 normal-case leading-snug">Automate payroll computations with zero stress.</p>
+                      <Link href="#fitur" className="block">
+                        <p className="text-xs font-bold text-gray-900 group-hover:text-primary transition-colors uppercase">Untuk HR & Admin</p>
+                        <p className="text-[10px] text-gray-500 mt-0.5 normal-case leading-snug">Rekap otomatis, approval cuti, impor karyawan dari CSV.</p>
                       </Link>
                     </div>
                     <div className="group cursor-pointer">
-                      <Link href="/register" className="block">
-                        <p className="text-xs font-bold text-gray-900 group-hover:text-primary transition-colors uppercase">For Directors & CEOs</p>
-                        <p className="text-[10px] text-gray-500 mt-0.5 normal-case leading-snug">High-level manpower telemetry and real-time costs.</p>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {activeMenu === 'resources' && (
-              <>
-                <div className="space-y-4">
-                  <h4 className="text-[10px] font-mono text-gray-400 uppercase tracking-widest border-b border-border pb-1.5">Calculation Tools</h4>
-                  <div className="space-y-3">
-                    <div className="group cursor-pointer">
-                      <Link href="/register" className="block">
-                        <p className="text-xs font-bold text-gray-900 group-hover:text-primary transition-colors uppercase">Net Salary Calculator</p>
-                        <p className="text-[10px] text-gray-500 mt-0.5 normal-case leading-snug">Estimate clean take-home pay structures for staff.</p>
-                      </Link>
-                    </div>
-                    <div className="group cursor-pointer">
-                      <Link href="/register" className="block">
-                        <p className="text-xs font-bold text-gray-900 group-hover:text-primary transition-colors uppercase">Bonus & THR Estimator</p>
-                        <p className="text-[10px] text-gray-500 mt-0.5 normal-case leading-snug">Calculate annual bonus figures based on tenure.</p>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <h4 className="text-[10px] font-mono text-gray-400 uppercase tracking-widest border-b border-border pb-1.5">Resources & Compliance</h4>
-                  <div className="space-y-3">
-                    <div className="group cursor-pointer">
-                      <Link href="/register" className="block">
-                        <p className="text-xs font-bold text-gray-900 group-hover:text-primary transition-colors uppercase">HR Dictionary</p>
-                        <p className="text-[10px] text-gray-500 mt-0.5 normal-case leading-snug">A comprehensive glossary of 100+ HR industry terms.</p>
-                      </Link>
-                    </div>
-                    <div className="group cursor-pointer">
-                      <Link href="/register" className="block">
-                        <p className="text-xs font-bold text-gray-900 group-hover:text-primary transition-colors uppercase">Blog & Insights</p>
-                        <p className="text-[10px] text-gray-500 mt-0.5 normal-case leading-snug">Guides on compliance and labor standards.</p>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <h4 className="text-[10px] font-mono text-gray-400 uppercase tracking-widest border-b border-border pb-1.5">Overtime Logic</h4>
-                  <div className="space-y-3">
-                    <div className="group cursor-pointer">
-                      <Link href="/register" className="block">
-                        <p className="text-xs font-bold text-gray-900 group-hover:text-primary transition-colors uppercase">Overtime Calculator</p>
-                        <p className="text-[10px] text-gray-500 mt-0.5 normal-case leading-snug">Calculate legal overtime compensation rates easily.</p>
-                      </Link>
-                    </div>
-                    <div className="group cursor-pointer">
-                      <Link href="/register" className="block">
-                        <p className="text-xs font-bold text-gray-900 group-hover:text-primary transition-colors uppercase">Guides & Ebooks</p>
-                        <p className="text-[10px] text-gray-500 mt-0.5 normal-case leading-snug">Best practices on managing remote field operations.</p>
+                      <Link href="#fitur" className="block">
+                        <p className="text-xs font-bold text-gray-900 group-hover:text-primary transition-colors uppercase">Untuk Pemilik Usaha</p>
+                        <p className="text-[10px] text-gray-500 mt-0.5 normal-case leading-snug">Lihat kehadiran, gaji, dan stok semua cabang dari satu layar.</p>
                       </Link>
                     </div>
                   </div>

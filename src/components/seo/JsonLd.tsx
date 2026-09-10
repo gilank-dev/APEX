@@ -31,45 +31,15 @@ export default function JsonLd() {
 
   const localBusinessSchema = {
     '@context': 'https://schema.org',
-    '@type': 'LocalBusiness',
+    '@type': 'Organization',
     name: SITE_CONFIG.company.name,
-    legalName: SITE_CONFIG.company.legalName,
     description: SITE_CONFIG.description,
     url: SITE_CONFIG.url,
     logo: `${SITE_CONFIG.url}/icon.png`,
-    image: `${SITE_CONFIG.url}/apex_dashboard_mockup.png`,
-    telephone: SITE_CONFIG.company.phone,
     email: SITE_CONFIG.company.email,
-    priceRange: '$$',
-    address: {
-      '@type': 'PostalAddress',
-      streetAddress: SITE_CONFIG.company.address,
-      addressLocality: SITE_CONFIG.company.city,
-      addressRegion: SITE_CONFIG.company.region,
-      postalCode: SITE_CONFIG.company.postalCode,
-      addressCountry: SITE_CONFIG.company.country,
-    },
-    geo: {
-      '@type': 'GeoCoordinates',
-      latitude: SITE_CONFIG.company.coordinates.latitude,
-      longitude: SITE_CONFIG.company.coordinates.longitude,
-    },
-    openingHoursSpecification: [
-      {
-        '@type': 'OpeningHoursSpecification',
-        dayOfWeek: [
-          'Monday',
-          'Tuesday',
-          'Wednesday',
-          'Thursday',
-          'Friday',
-          'Saturday',
-          'Sunday',
-        ],
-        opens: '00:00',
-        closes: '23:59',
-      },
-    ],
+    telephone: SITE_CONFIG.company.phone,
+    // No fake street address, postal code, or geo coordinates:
+    // SaaS produk, bukan lokasi fisik. Google validasi alamat LocalBusiness.
     sameAs: [SITE_CONFIG.social.github],
   }
 

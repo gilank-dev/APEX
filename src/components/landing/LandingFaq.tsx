@@ -8,16 +8,24 @@ export default function LandingFaq() {
 
   const faqs = [
     {
-      q: 'Is our attendance and payroll data secure?',
-      a: 'Absolutely. All data is encrypted via SSL/TLS end-to-end and stored securely using Row Level Security policies. Daily automated backups are performed to guarantee zero data loss.'
+      q: 'Apakah data absensi dan payroll kami aman?',
+      a: 'Data disimpan di database dengan kebijakan Row Level Security (RLS), artinya perusahaan lain tidak mungkin bisa melihat atau mengubah data kamu. Koneksi dienkripsi SSL/TLS, dan log absensi tidak bisa diubah atau dihapus setelah tercatat supaya rekap gaji bisa dipercaya untuk audit.'
     },
     {
-      q: 'How do I start using the platform for free?',
-      a: 'Simply click the Get Started button to register a new tenant space. You will instantly receive free-tier access supporting up to 15 team members forever.'
+      q: 'Bagaimana cara mulai gratis?',
+      a: 'Klik tombol Coba Gratis, daftar, dan langsung dapat akses free tier untuk 15 anggota tim selamanya. Semua paket baru juga dapat trial Pro 14 hari tanpa kartu kredit.'
     },
     {
-      q: 'Can it integrate with third-party software or biometric hardware?',
-      a: 'Yes. We provide custom integration protocols and secure REST APIs to pull logic records from hardware devices or external payroll accounts directly to our cloud.'
+      q: 'Bisa integrasi dengan software lain?',
+      a: 'Ada REST API dan webhook terverifikasi HMAC untuk menarik data absensi dan payroll ke sistem lain yang sudah kamu pakai. Untuk kebutuhan khusus, bisa langsung dibahas via WhatsApp dengan developer-nya.'
+    },
+    {
+      q: 'Selfie karyawan dipakai untuk apa saja?',
+      a: 'Hanya untuk verifikasi kehadiran. Foto dikompres di perangkat sebelum dikirim, tersimpan terisolasi per perusahaan, dan tidak dibagikan ke pihak ketiga untuk keperluan apa pun.'
+    },
+    {
+      q: 'Kami tidak paham teknis, apakah bisa dibantu?',
+      a: 'Bisa. Impor data karyawan dari Excel/CSV dibantu langsung sampai jalan. Kalau ada kendala, tanya via WhatsApp dan dijawab oleh orang yang membangun aplikasinya, bukan call center.'
     }
   ]
 

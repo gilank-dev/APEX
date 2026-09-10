@@ -19,23 +19,23 @@ export default function LandingFooter() {
               <span className="font-mono tracking-widest text-xs font-semibold uppercase text-foreground">APEX</span>
             </div>
             <p className="text-[10px] text-gray-500 font-mono leading-relaxed">
-              Unified SaaS Node for Operations, Attendance Logs, Task Boards, and Precision Inventories.
+              Absensi selfie terverifikasi, rekap gaji otomatis, papan tugas, dan catat stok dalam satu aplikasi.
             </p>
           </div>
           <div>
-            <h4 className="text-xs font-bold text-gray-950 uppercase tracking-widest mb-4">Core Solutions</h4>
+            <h4 className="text-xs font-bold text-gray-950 uppercase tracking-widest mb-4">Fitur</h4>
             <ul className="text-xs text-gray-500 font-mono space-y-2">
-              <li><Link href="#fitur" className="hover:text-primary transition-colors duration-200">Payroll Engine</Link></li>
-              <li><Link href="#fitur" className="hover:text-primary transition-colors duration-200">Selfie Attendance</Link></li>
-              <li><Link href="#fitur" className="hover:text-primary transition-colors duration-200">Task Board</Link></li>
-              <li><Link href="#fitur" className="hover:text-primary transition-colors duration-200">Inventory Stock</Link></li>
+              <li><Link href="#fitur" className="hover:text-primary transition-colors duration-200">Absensi Selfie</Link></li>
+              <li><Link href="#fitur" className="hover:text-primary transition-colors duration-200">Payroll Otomatis</Link></li>
+              <li><Link href="#fitur" className="hover:text-primary transition-colors duration-200">Papan Tugas</Link></li>
+              <li><Link href="#fitur" className="hover:text-primary transition-colors duration-200">Catat Stok</Link></li>
             </ul>
           </div>
           <div>
-            <h4 className="text-xs font-bold text-gray-950 uppercase tracking-widest mb-4">Company</h4>
+            <h4 className="text-xs font-bold text-gray-950 uppercase tracking-widest mb-4">Perusahaan</h4>
             <ul className="text-xs text-gray-500 font-mono space-y-2">
-              <li><Link href="/pricing" className="hover:text-primary transition-colors duration-200">Harga / Pricing</Link></li>
-              <li><Link href="#tentang-kami" className="hover:text-primary transition-colors duration-200">About Us</Link></li>
+              <li><Link href="/pricing" className="hover:text-primary transition-colors duration-200">Harga</Link></li>
+              <li><Link href="#tentang-kami" className="hover:text-primary transition-colors duration-200">Tentang Kami</Link></li>
               <li>
                 <a 
                   href="https://wa.me/6282124153732?text=Halo%20Apex%2C%20saya%20tertarik%20dengan%20peluang%20karir%20di%20perusahaan." 
@@ -69,9 +69,9 @@ export default function LandingFooter() {
             </ul>
           </div>
           <div>
-            <h4 className="text-xs font-bold text-gray-950 uppercase tracking-widest mb-4">Contact Us</h4>
+            <h4 className="text-xs font-bold text-gray-950 uppercase tracking-widest mb-4">Kontak</h4>
             <p className="text-xs text-gray-500 font-mono leading-relaxed">
-              Apex Operations by Lankdev<br />
+              Apex by Lankdev<br />
               WhatsApp:{' '}
               <a 
                 href="https://wa.me/6282124153732" 
@@ -86,7 +86,7 @@ export default function LandingFooter() {
         </div>
         <div className="bg-gray-50 border-t border-border">
           <div className="max-w-6xl mx-auto px-6 py-6 flex flex-col sm:flex-row justify-between items-center gap-3 text-[10px] font-mono text-gray-500 uppercase tracking-wider text-center sm:text-left">
-            <span>© 2026 Apex Operations by Lankdev. All rights reserved.</span>
+            <span>© 2026 Apex by Lankdev. Seluruh hak cipta dilindungi.</span>
             <div className="flex gap-4">
               <button 
                 onClick={() => setLegalType('privacy')} 
@@ -109,8 +109,8 @@ export default function LandingFooter() {
       <LegalModal 
         isOpen={legalType !== null} 
         onClose={() => setLegalType(null)} 
-        type={legalType || 'privacy'} 
-      />
+        type={legalType || 'privacy'}
+        />
     </>
   )
 }

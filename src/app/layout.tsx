@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "goey-toast/styles.css";
 import { SITE_CONFIG } from "@/lib/site";
 import JsonLd from "@/components/seo/JsonLd";
 
@@ -33,14 +34,15 @@ export const metadata: Metadata = {
   creator: "Lankdev",
   publisher: SITE_CONFIG.company.legalName,
   keywords: [
-    "B2B Operations",
-    "Enterprise SaaS",
-    "Selfie Attendance",
-    "Biometric Verification",
-    "Kanban Tasks",
-    "SKU Inventory Telemetry",
-    "Multi-Tenant Platform",
-    "Offline-First System",
+    "absensi karyawan",
+    "absensi selfie",
+    "aplikasi absensi online",
+    "payroll otomatis",
+    "hitung gaji karyawan",
+    "manajemen shift kerja",
+    "inventaris stok",
+    "HRIS Indonesia",
+    "sistem HRD UMKM",
   ],
   alternates: {
     canonical: "/",
@@ -58,7 +60,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: "website",
-    locale: "en_US",
+    locale: "id_ID",
     url: SITE_CONFIG.url,
     title: SITE_CONFIG.fullName,
     description: SITE_CONFIG.description,
@@ -98,7 +100,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="id"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">

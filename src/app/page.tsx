@@ -25,27 +25,27 @@ export const metadata: Metadata = {
 export default function Home() {
   const services = [
     {
-      title: 'Enterprise Deployment',
-      description: 'Large-scale deployment services featuring secure database migrations and on-site technical coordination.',
+      title: 'Bantuan Setup & Migrasi Data',
+      description: 'Impor data karyawan dari Excel/CSV dibantu langsung sama developer, bukan tiket yang nyangkut berhari-hari.',
       icon: <Settings className="w-6 h-6 text-primary" />
     },
     {
-      title: 'Custom Integration',
-      description: 'Connect core operations with hardware biometric devices, legacy payroll bank networks, or custom REST APIs.',
+      title: 'Integrasi via API',
+      description: 'Webhook terverifikasi HMAC dan REST API untuk nyambungin data absensi dan payroll ke sistem lain yang sudah kamu pakai.',
       icon: <Compass className="w-6 h-6 text-primary" />
     },
     {
-      title: '24/7 Dedicated Support',
-      description: 'Instant issue resolution and technical support via WhatsApp with a Dedicated Account Manager.',
+      title: 'Support Langsung ke Developer',
+      description: 'Tanya apa aja via WhatsApp, dijawab sama orang yang nulis kodenya. Bukan call center, bukan bot.',
       icon: <MessageSquare className="w-6 h-6 text-primary" />
     }
   ]
 
   const stats = [
-    { value: 'Gratis 14 Hari', label: 'Free 14-day Pro trial' },
+    { value: 'Gratis 14 Hari', label: 'Trial Pro tanpa kartu kredit' },
     { value: '3 Modul', label: 'Absensi / Tugas / Inventaris' },
-    { value: 'Multi-Tenant', label: 'Isolated workspace per company' },
-    { value: '24/7', label: 'WhatsApp support response' }
+    { value: 'Multi-Tenant', label: 'Workspace terisolasi per perusahaan' },
+    { value: 'Dibangun di Indonesia', label: 'Support bahasa Indonesia via WhatsApp' }
   ]
 
   return (
@@ -56,8 +56,8 @@ export default function Home() {
         <div className="flex gap-x-12 w-max animate-marquee whitespace-nowrap text-[10px] font-mono font-bold uppercase tracking-wider select-none">
           {[1, 2, 3].map((_, idx) => (
             <span key={idx} className="flex items-center gap-x-12">
-              <span>Apex Campaign 2026 // Upgrade the Speed and Accuracy of Your Enterprise Operations</span>
-              <span className="text-white/40">//</span>
+              <span>Apex Campaign 2026 • Absensi Selfie, Payroll Otomatis, dan Inventaris dalam Satu Aplikasi</span>
+              <span className="text-white/40">•</span>
             </span>
           ))}
         </div>
@@ -105,7 +105,10 @@ export default function Home() {
 
             <div className="pt-6 border-t border-border flex flex-wrap gap-6 items-center w-full max-w-full">
               <div className="text-[10px] text-gray-400 font-mono uppercase tracking-wider break-all">
-                ✓ Bank-grade Security Encryption
+                ✓ Data karyawan terisolasi per perusahaan (RLS)
+              </div>
+              <div className="text-[10px] text-gray-400 font-mono uppercase tracking-wider break-all">
+                ✓ Log absensi anti-edit (immutable audit trail)
               </div>
             </div>
           </div>
@@ -117,9 +120,9 @@ export default function Home() {
         {/* Section 3: Core Features (Bento Grid) */}
         <section id="fitur" className="space-y-12">
           <div className="text-center max-w-2xl mx-auto space-y-3">
-            <span className="text-[10px] font-mono text-primary uppercase tracking-widest font-semibold">ENTERPRISE INTEGRATION</span>
-            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900">All-in-One Operations Control Center</h2>
-            <p className="text-xs text-gray-500 leading-normal">A high-density Bento Grid interface consolidating real-time telemetry, automated calculations, and inventory monitoring.</p>
+            <span className="text-[10px] font-mono text-primary uppercase tracking-widest font-semibold">FITUR UTAMA</span>
+            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900">Semua operasional, satu dashboard</h2>
+            <p className="text-xs text-gray-500 leading-normal">Absensi, tugas, dan stok dipantau real-time dari satu tempat. Tanpa pindah aplikasi.</p>
           </div>
 
           <LandingBentoGrid />
@@ -128,19 +131,19 @@ export default function Home() {
         {/* Section 4: About & Vision */}
         <section id="tentang-kami" className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center border-t border-border pt-24">
           <div className="space-y-6">
-            <span className="text-[10px] font-mono text-primary uppercase tracking-widest font-semibold">Our Vision & Mission</span>
-            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900">Digitizing operations with absolute clarity.</h2>
+            <span className="text-[10px] font-mono text-primary uppercase tracking-widest font-semibold">Tentang Apex</span>
+            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900">Digitalisasi operasional yang bersih dan jujur.</h2>
             <p className="text-xs text-gray-500 leading-relaxed">
-              We believe B2B execution stems from deterministic, audit-ready data. Our mission is to deliver clean, secure, and selfie-verified workflows that drive productivity.
+              Apex dibangun dan dikembangkan langsung di Indonesia oleh Lankdev. Satu orang, satu kode, tanpa tim marketing yang menggelembungkan klaim. Yang ada di halaman ini sama dengan yang ada di dalam aplikasi.
             </p>
             <div className="grid grid-cols-2 gap-6 pt-4">
               <div>
-                <h4 className="text-xs font-bold text-gray-900 uppercase">Apex Vision</h4>
-                <p className="text-[11px] text-gray-500 mt-1.5 leading-relaxed">To be the standard workflow and operations panel for high-growth enterprises globally.</p>
+                <h4 className="text-xs font-bold text-gray-900 uppercase">Visi</h4>
+                <p className="text-[11px] text-gray-500 mt-1.5 leading-relaxed">Jadi alat operasional harian yang terpercaya untuk bisnis berbasis shift di Indonesia.</p>
               </div>
               <div>
-                <h4 className="text-xs font-bold text-gray-900 uppercase">Apex Mission</h4>
-                <p className="text-[11px] text-gray-500 mt-1.5 leading-relaxed">To deliver transparent payroll computing, real-time SKU inventory logs, and rapid selfie verification.</p>
+                <h4 className="text-xs font-bold text-gray-900 uppercase">Misi</h4>
+                <p className="text-[11px] text-gray-500 mt-1.5 leading-relaxed">Rekap kehadiran yang tidak bisa dimanipulasi, hitung gaji yang transparan, dan stok yang selalu kelihatan.</p>
               </div>
             </div>
           </div>
@@ -160,9 +163,9 @@ export default function Home() {
         {/* Section 5: Services Grid */}
         <section className="space-y-12">
           <div className="text-center max-w-2xl mx-auto space-y-3">
-            <span className="text-[10px] font-mono text-primary uppercase tracking-widest font-semibold">PREMIUM SERVICES</span>
-            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900">Enterprise Implementation Support</h2>
-            <p className="text-xs text-gray-500 leading-normal">Professional onboarding, data migration, and technical configuration designed for seamless setup.</p>
+            <span className="text-[10px] font-mono text-primary uppercase tracking-widest font-semibold">LAYANAN</span>
+            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900">Dibantu dari awal, bukan ditinggal setelah daftar</h2>
+            <p className="text-xs text-gray-500 leading-normal">Setup, impor data, dan pertanyaan teknis ditangani langsung sama developer-nya.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -186,23 +189,23 @@ export default function Home() {
           <div className="lg:col-span-7 space-y-6">
             <div className="flex items-center gap-2 text-primary">
               <ShieldCheck className="w-5 h-5" />
-              <span className="text-[10px] font-mono uppercase tracking-widest font-bold">Data Privacy Guaranteed</span>
+              <span className="text-[10px] font-mono uppercase tracking-widest font-bold">Keamanan &amp; Privasi Data</span>
             </div>
-            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900">Bank-Grade Cryptographic Security</h2>
+            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900">Keamanan data yang bisa dicek, bukan sekadar klaim</h2>
             <p className="text-xs text-gray-500 leading-relaxed">
-              We prioritize the privacy of your workforce and financial records. All connections are secured via end-to-end SSL/TLS encryption, backed by Row Level Security (RLS) policies, and immutable audit trails.
+              Setiap perusahaan mendapat workspace terisolasi dengan kebijakan Row Level Security (RLS) di level database. Koneksi dienkripsi SSL/TLS. Log absensi tidak bisa diubah atau dihapus setelah tercatat, jadi rekap gaji dan audit tidak bisa dimanipulasi.
             </p>
             <div className="flex flex-wrap gap-6 text-[10px] font-mono text-gray-400 uppercase tracking-widest">
-              <span>✓ Database Isolation</span>
-              <span>✓ Real-time Sync Backup</span>
-              <span>✓ Enkripsi data offline di perangkat</span>
+              <span>✓ Isolasi database per perusahaan</span>
+              <span>✓ Sinkronisasi offline-first</span>
+              <span>✓ Foto absensi terenkripsi di perangkat</span>
             </div>
           </div>
           <div className="lg:col-span-5 flex justify-center">
             <div className="p-2 bg-white border border-border rounded-lg shadow-sm w-full max-w-sm overflow-hidden">
               <Image 
                 src="/apex_payroll_illustration.png" 
-                alt="Apex bank-grade cryptographic security architecture with Row-Level Security isolation and offline encrypted local storage" 
+                alt="Diagram arsitektur keamanan Apex: isolasi workspace per perusahaan dengan Row Level Security dan log absensi yang tidak bisa diubah"
                 width={500}
                 height={350}
                 className="w-full h-auto rounded-md object-cover"
@@ -215,7 +218,7 @@ export default function Home() {
         <section id="faq" className="max-w-3xl mx-auto space-y-12 border-t border-border pt-24">
           <div className="text-center space-y-3">
             <span className="text-[10px] font-mono text-primary uppercase tracking-widest font-semibold">FAQ</span>
-            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900">Frequently Asked Questions</h2>
+            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900">Pertanyaan yang Sering Diajukan</h2>
           </div>
 
           <LandingFaq />
@@ -224,12 +227,12 @@ export default function Home() {
         {/* Section 9: Global CTA */}
         <section className="bg-primary text-white rounded-lg p-8 md:p-16 text-center space-y-6 shadow-xl relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-primary-hover to-primary opacity-50 -z-10" />
-          <span className="text-[10px] font-mono uppercase tracking-widest font-bold bg-white/10 px-3 py-1 border border-white/20 rounded-[2px]">Get Started</span>
+          <span className="text-[10px] font-mono uppercase tracking-widest font-bold bg-white/10 px-3 py-1 border border-white/20 rounded-[2px]">Mulai Sekarang</span>
           <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight max-w-2xl mx-auto leading-tight">
-            Ready to Optimize Your Business Operations?
+            Berhenti nge-rekap absensi manual hari ini.
           </h2>
           <p className="text-white/80 text-xs md:text-sm max-w-lg mx-auto leading-relaxed">
-            Get started with a 14-day free trial. Connect field logs, automate payroll pipelines, and centralize resource tracking.
+            Coba 14 hari gratis tanpa kartu kredit. Impor data karyawan dari Excel, dan lihat sendiri rekap absensi plus perhitungan gaji otomatis untuk tim kamu.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
             <Link

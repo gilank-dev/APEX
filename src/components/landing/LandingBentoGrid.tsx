@@ -7,7 +7,7 @@ const fadeInUp = {
   hidden: { opacity: 0, y: 30 },
   visible: { 
     opacity: 1, 
-    y: 0,
+    y: 0, 
     transition: { type: 'spring' as const, stiffness: 100, damping: 20 }
   }
 }
@@ -25,31 +25,31 @@ const staggerContainer = {
 export default function LandingBentoGrid() {
   const bentoFeatures = [
     {
-      title: 'Real-Time Selfie Attendance',
-      description: 'Instant front-camera selfie verification. Light, privacy-centric, and secure from proxy manipulation.',
+      title: 'Absensi Selfie Real-Time',
+      description: 'Verifikasi selfie dengan kamera depan plus titik lokasi GPS. Tidak bisa diwakilkan, tidak bisa dari rumah.',
       icon: <Clock className="w-5 h-5 text-primary" />,
-      badge: 'Real-Time',
+      badge: 'Absensi',
       className: 'md:col-span-2'
     },
     {
-      title: 'Automated Payroll Engine',
-      description: 'Server-side automated tax computations, allowances, and digital salary slips dispatched in one run.',
+      title: 'Payroll Otomatis',
+      description: 'Gaji, lembur, dan slip digenerate otomatis dari rekap kehadiran. Sekali klik, selesai.',
       icon: <CreditCard className="w-5 h-5 text-primary" />,
-      badge: '99.9% Accurate',
+      badge: 'Gaji',
       className: 'md:col-span-1'
     },
     {
-      title: 'Operations Analytics',
-      description: 'High-density charts and performance indicators tracking shift attendance, task progress, and low stocks.',
+      title: 'Analitik Operasional',
+      description: 'Grafik kehadiran, keterlambatan, progres tugas, dan stok menipis. Semua kelihatan dalam satu layar.',
       icon: <TrendingUp className="w-5 h-5 text-primary" />,
-      badge: 'Telemetry',
+      badge: 'Monitoring',
       className: 'md:col-span-1'
     },
     {
-      title: 'Dynamic Roster & Workflow',
-      description: 'Flexible morning and night shift allocation, custom approval policies, and online reimbursement logs.',
+      title: 'Shift & Cuti Fleksibel',
+      description: 'Atur jadwal shift pagi dan malam, ajukan cuti dengan alur approval, dan tukar shift antar karyawan. Semua tercatat rapi.',
       icon: <Calendar className="w-5 h-5 text-primary" />,
-      badge: 'Flexible',
+      badge: 'Jadwal',
       className: 'md:col-span-2'
     }
   ]
