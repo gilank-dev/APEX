@@ -1,0 +1,40 @@
+name: Regenerate lockfile
+
+on:
+  workflow_dispatch:
+
+jobs:
+  regen:
+    name: npm install di Linux, commit lock file
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Fresh install (regenerate lock)
+        run: |
+          rm -rf node_modules package-lock.json
+          npm install
+
+      - name: Verify npm ci
+        run: |
+          rm -rf node_modules
+          npm ci
+
+      - name: Commit & push lock file
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json package.json
+          git diff --cached --quiet && echo "No changes" && exit 0
+          git commit -m "chore(deps): regenerate lockfile on Linux runner (npm ci parity)"
+          git push
