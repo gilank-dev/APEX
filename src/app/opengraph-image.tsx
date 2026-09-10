@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og'
 
 export const runtime = 'edge'
-export const alt = 'Apex — Enterprise Operations Control Node'
+export const alt = 'Apex — Absensi Selfie, Payroll Otomatis & Inventaris dalam Satu Aplikasi'
 export const size = {
   width: 1200,
   height: 630,
@@ -70,7 +70,7 @@ export default async function Image() {
               marginLeft: '12px',
             }}
           >
-            ENTERPRISE SaaS NODE
+            GRATIS 14 HARI
           </span>
         </div>
 
@@ -86,7 +86,7 @@ export default async function Image() {
               letterSpacing: '-1px',
             }}
           >
-            Scale your enterprise operations with lightning-fast automation.
+            Absensi selfie, payroll otomatis, stok kelihatan. Satu aplikasi.
           </h1>
           <p
             style={{
@@ -97,11 +97,11 @@ export default async function Image() {
               maxWidth: '850px',
             }}
           >
-            Biometric Selfie Attendance • Kanban Tasks Board • Low-Stock SKU Tracking • Multi-Tenant Isolation
+            Absensi Selfie + GPS • Rekap Gaji Otomatis • Cuti & Shift • Inventaris • Tanpa Kartu Kredit
           </p>
         </div>
 
-        {/* Bottom Bar: Telemetry Stats & Badges */}
+        {/* Bottom Bar: Trust points */}
         <div
           style={{
             display: 'flex',
@@ -114,20 +114,20 @@ export default async function Image() {
         >
           <div style={{ display: 'flex', gap: '40px' }}>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '12px', color: '#64748B', letterSpacing: '1px' }}>SECURITY</span>
-              <span style={{ fontSize: '18px', fontWeight: 700, color: '#F97316' }}>Bank-Grade RLS</span>
+              <span style={{ fontSize: '12px', color: '#64748B', letterSpacing: '1px' }}>KEAMANAN</span>
+              <span style={{ fontSize: '18px', fontWeight: 700, color: '#F97316' }}>Isolasi Data RLS</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '12px', color: '#64748B', letterSpacing: '1px' }}>SYNC</span>
-              <span style={{ fontSize: '18px', fontWeight: 700, color: '#38BDF8' }}>Offline-First IDB</span>
+              <span style={{ fontSize: '12px', color: '#64748B', letterSpacing: '1px' }}>MODE OFFLINE</span>
+              <span style={{ fontSize: '18px', fontWeight: 700, color: '#38BDF8' }}>Absen Tetap Jalan</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '12px', color: '#64748B', letterSpacing: '1px' }}>ACCURACY</span>
-              <span style={{ fontSize: '18px', fontWeight: 700, color: '#34D399' }}>99.9% Telemetry</span>
+              <span style={{ fontSize: '12px', color: '#64748B', letterSpacing: '1px' }}>SUPPORT</span>
+              <span style={{ fontSize: '18px', fontWeight: 700, color: '#34D399' }}>Langsung ke Developer</span>
             </div>
           </div>
           <div style={{ fontSize: '16px', color: '#64748B', fontFamily: 'monospace' }}>
-            apex.lankdev.com
+            apex.lankdev.my.id
           </div>
         </div>
       </div>
