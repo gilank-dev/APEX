@@ -120,3 +120,23 @@ Scope: production Supabase (linked project okbryysoxihmamujoipb) + repo hygiene 
 - `tests/e2e/apex_mobile_check.py` — mobile viewport 4/4
 - `supabase/migrations/20260910000014_explicit_grants.sql`
 - `supabase/migrations/20260910000016_rls_deactivated_lockout.sql`
+
+---
+
+# Bagian III — Lead Engineer: post-mortem 9x deploy gagal + CI lockfile (2026-09-11 dini hari)
+
+## Kronologi
+- 9 deployment production gagal berturut (701d0cd → fa5fe54) — semua gagal di `npm ci` di Vercel
+- Root cause: lockfile regen di CI Linux (379edc3/86390e8) internal-consistent tapi cross-platform incompatible dengan regen Windows — transitive optional deps `@emnapi/*` (sharp/tailwind-oxide/unrs-resolver) hoisting beda per-platform
+- Percobaan fix sore: pin @emnapi (f6c42de) → unpin (6aac0dd) — tidak menyentuh akar
+- Malamnya: lockfile di-regen fresh di Windows (5d179e4) → **Vercel sukses tapi CI Linux gagal** (Missing @emnapi/runtime+core 1.11.3)
+- Fix final (804b9c9): revert lockfile ke regen Linux 86390e8 yang terverifikasi hijau di CI + Vercel. Dev lokal Windows pakai `npm install` (bukan `npm ci`) — tidak terdampak.
+
+## Pelajaran (ditulis untuk tidak diulang)
+1. **Jangan regen lockfile lintas platform untuk optional deps** — npm punya bug klasik: ideal tree beda per-platform, `npm ci` strict-validasi. Regeneration harus dilakukan di platform yang sama dengan konsumen utama (CI+Vercel = Linux).
+2. **`npm ci --dry-run` tidak validasi hoisting penuh** — lolos dry-run ≠ lolos ci real. Gate deploy harus `npm ci` real + `next build` real.
+3. **Kredensial QA di public repo**: sudah dirotasi malam ini (Bagian II). Jangan hardcode kredensial di file repo, termasuk file markdown dokumentasi.
+
+## Status akhir (semua terverifikasi via GitHub API + Vercel status)
+- Commit `804b9c9`: CI ✅ success (run 34543185108) | Vercel ✅ success | prod apex.lankdev.my.id serving build terbaru
+- Rantai gagal 9x berakhir; content marketing honest (701d0cd) + billing sync (49246c1) + hardening (c283ef1) semuanya live
