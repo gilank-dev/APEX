@@ -61,7 +61,7 @@ export async function registerTenantAction(prevState: any, formData: FormData) {
   }
 
   if (!companyName || !category || !slug || !adminName || !email || !password) {
-    return { error: 'All fields are required.' }
+    return { error: 'Semua kolom wajib diisi.' }
   }
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -74,7 +74,7 @@ export async function registerTenantAction(prevState: any, formData: FormData) {
   }
 
   if (BLACKLIST.includes(slug)) {
-    return { error: 'This company slug is reserved.' }
+    return { error: 'Alamat workspace ini dipakai untuk halaman khusus sistem. Ganti dengan yang berbeda.' }
   }
 
   const adminClient = createAdminClient()
@@ -87,7 +87,7 @@ export async function registerTenantAction(prevState: any, formData: FormData) {
     .maybeSingle()
 
   if (existingCompany) {
-    return { error: 'This company slug is already registered.' }
+    return { error: 'Alamat workspace ini sudah dipakai perusahaan lain. Ganti dengan yang berbeda.' }
   }
 
   // Create Auth User (admin API: email confirmed immediately so the auto
@@ -127,7 +127,7 @@ export async function registerTenantAction(prevState: any, formData: FormData) {
   if (companyError || !company) {
     // Cleanup auth user on failure
     await adminClient.auth.admin.deleteUser(userId)
-    return { error: 'Failed to create company data.' }
+    return { error: 'Gagal menyiapkan data perusahaan. Coba lagi, kalau masih gagal hubungi WhatsApp kami.' }
   }
 
   // Generate unique invite codes (crypto-random, rejection-sampled)
@@ -156,12 +156,12 @@ export async function registerTenantAction(prevState: any, formData: FormData) {
   if (rolesError || !roles) {
     await adminClient.from('companies').delete().eq('id', company.id)
     await adminClient.auth.admin.deleteUser(userId)
-    return { error: 'Failed to create role access groups.' }
+    return { error: 'Gagal menyiapkan hak akses. Data sementara sudah dibatalkan, coba daftar ulang.' }
   }
 
   const adminRole = roles.find((r) => r.is_admin)
   if (!adminRole) {
-    return { error: 'Internal Error: Admin role not found.' }
+    return { error: 'Kesalahan sistem: role admin tidak ditemukan. Hubungi kami via WhatsApp.' }
   }
 
   // Insert Admin into users profile table
@@ -177,7 +177,7 @@ export async function registerTenantAction(prevState: any, formData: FormData) {
   if (userError) {
     await adminClient.from('companies').delete().eq('id', company.id)
     await adminClient.auth.admin.deleteUser(userId)
-    return { error: 'Failed to save admin user profile.' }
+    return { error: 'Gagal menyimpan profil admin. Data sementara sudah dibatalkan, coba daftar ulang.' }
   }
 
   // Auto Sign In by setting cookies
@@ -185,7 +185,7 @@ export async function registerTenantAction(prevState: any, formData: FormData) {
   const { error: signInError } = await client.auth.signInWithPassword({ email, password })
 
   if (signInError) {
-    return { error: 'Registration successful, please sign in manually.' }
+    return { error: 'Pendaftaran berhasil, tapi login otomatis gagal. Coba masuk manual dengan email dan password kamu.' }
   }
 
   return { success: true, slug }
@@ -196,7 +196,7 @@ export async function loginAdminAction(prevState: any, formData: FormData) {
   const password = formData.get('password') as string
 
   if (!email || !password) {
-    return { error: 'Email and password are required.' }
+    return { error: 'Email dan password wajib diisi.' }
   }
 
   // Intercept super-admin credentials: map alias to env email
@@ -225,7 +225,7 @@ export async function loginAdminAction(prevState: any, formData: FormData) {
   })
 
   if (error || !data.user) {
-    return { error: 'Invalid email or password.' }
+    return { error: 'Email atau password salah.' }
   }
 
   const companySlug = data.user.user_metadata?.company_slug
@@ -239,7 +239,7 @@ export async function joinEmployeeAction(prevState: any, formData: FormData) {
   const password = formData.get('password') as string
 
   if (!inviteCode || !fullName || !password) {
-    return { error: 'All fields are required.' }
+    return { error: 'Semua kolom wajib diisi.' }
   }
 
   // Rate limiting per IP + per code: max 10 attempts / 10 minutes
@@ -256,7 +256,7 @@ export async function joinEmployeeAction(prevState: any, formData: FormData) {
   const codeCheck = joinRateLimiter.check(`code:${normalizedCode}`)
 
   if (!ipCheck.allowed || !codeCheck.allowed) {
-    return { error: 'Invalid or expired invitation code.' }
+    return { error: 'Kode undangan tidak valid atau sudah kedaluwarsa. Cek lagi sama HR/bos kamu.' }
   }
 
   const adminClient = createAdminClient()
@@ -269,7 +269,7 @@ export async function joinEmployeeAction(prevState: any, formData: FormData) {
     .maybeSingle()
 
   if (roleError || !role) {
-    return { error: 'Invalid or expired invitation code.' }
+    return { error: 'Kode undangan tidak valid atau sudah kedaluwarsa. Cek lagi sama HR/bos kamu.' }
   }
 
   const companiesData = role.companies as any
@@ -320,7 +320,7 @@ export async function joinEmployeeAction(prevState: any, formData: FormData) {
   if (insertError) {
     // Cleanup user
     await adminClient.auth.admin.deleteUser(newUser.user.id)
-    return { error: 'Failed to create employee profile.' }
+    return { error: 'Gagal membuat profil karyawan. Coba lagi, kalau masih gagal hubungi HR kamu.' }
   }
 
   // 5. Authenticate session
@@ -331,7 +331,7 @@ export async function joinEmployeeAction(prevState: any, formData: FormData) {
   })
 
   if (signInError) {
-    return { error: 'Registration completed. Please sign in using email: ' + pseudoEmail }
+    return { error: 'Pendaftaran berhasil. Masuk pakai email berikut: ' + pseudoEmail }
   }
 
   return { success: true, slug: companySlug }

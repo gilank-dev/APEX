@@ -2,14 +2,14 @@ import type { Metadata } from 'next'
 import JoinClient from './JoinClient'
 
 export const metadata: Metadata = {
-  title: 'Join Workspace — Apex Operations Control',
-  description: 'Enter your workspace invitation code to register your profile and access attendance telemetry.',
+  title: 'Gabung Tim — Apex',
+  description: 'Masukkan kode undangan dari perusahaan kamu untuk bikin akun karyawan dan langsung absen selfie dari HP.',
   alternates: {
     canonical: '/join',
   },
   openGraph: {
-    title: 'Join Workspace — Apex Operations Control',
-    description: 'Enter your workspace invitation code to register your profile and access attendance telemetry.',
+    title: 'Gabung Tim — Apex',
+    description: 'Masukkan kode undangan dari perusahaan kamu untuk bikin akun karyawan dan langsung absen selfie dari HP.',
   },
 }
 

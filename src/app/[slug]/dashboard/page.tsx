@@ -4,6 +4,19 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { effectiveTier, isTrialActive, formatTrialDate } from '@/lib/entitlements'
 
+// Minimal tenant shapes used by this page (subset of the DB rows)
+interface Company {
+  id: string
+  slug: string
+  tier: string
+  trial_ends_at: string | null
+  active_modules?: string[] | null
+}
+
+interface Role {
+  name: string
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
   const formatted = slug.toUpperCase()
@@ -36,8 +49,8 @@ export default async function DashboardPage({ params }: { params: Promise<{ slug
     redirect('/login')
   }
 
-  const company = profile.companies as any
-  const role = profile.roles as any
+  const company = profile.companies as Company
+  const role = profile.roles as Role
   const activeModules = company.active_modules || ['attendance', 'tasks']
 
   // Fetch stats count
@@ -149,7 +162,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ slug
       {isTrialActive(company) && (
         <div className="p-4 bg-orange-50/80 border border-primary/20 rounded-lg text-xs font-mono text-primary flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 select-none">
           <div>
-            <span className="font-bold">TRIAL PRO AKTIF:</span> Berlaku s.d. {formatTrialDate(company.trial_ends_at)}. Kuota hingga 100 karyawan & seluruh modul Pro terbuka.
+            <span className="font-bold">TRIAL PRO AKTIF:</span> Berlaku s.d. {formatTrialDate(company.trial_ends_at as string)}. Kuota hingga 100 karyawan & seluruh modul Pro terbuka.
           </div>
           <Link
             href={`/${slug}/billing`}
@@ -185,7 +198,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ slug
         {/* Stat 1: Attendance */}
         {activeModules.includes('attendance') && (
           <div className="liquid-glass p-6 border border-border rounded-lg flex flex-col justify-between h-36">
-            <span className="text-xs font-mono text-gray-500 uppercase tracking-wider">Today's Attendance Log</span>
+            <span className="text-xs font-mono text-gray-500 uppercase tracking-wider">Today&apos;s Attendance Log</span>
             <div className="flex justify-between items-baseline mt-2">
               <span className="text-4xl font-extrabold text-foreground font-mono">{attendanceCount || 0}</span>
               <span className="text-xs text-gray-450 text-gray-500 font-mono">ACTIVE ATTENDANCE</span>

@@ -3,12 +3,29 @@
 import { useState, useTransition } from 'react'
 import { registerTenantAction } from '@/lib/actions'
 import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
-import Breadcrumbs from '@/components/shared/Breadcrumbs'
+import { ArrowRight, Eye, EyeOff } from 'lucide-react'
 
 export default function RegisterClient() {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
+  const [companyName, setCompanyName] = useState('')
+  const [slug, setSlug] = useState('')
+  const [slugTouched, setSlugTouched] = useState(false)
+
+  const slugify = (name: string) =>
+    name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+
+  const handleCompanyName = (value: string) => {
+    setCompanyName(value)
+    if (!slugTouched) setSlug(slugify(value))
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -37,17 +54,17 @@ export default function RegisterClient() {
         </div>
         <div className="max-w-md space-y-4">
           <div className="inline-block px-3 py-1 bg-orange-50 border border-primary/20 rounded-md font-mono text-[11px] text-primary uppercase tracking-widest font-semibold">
-            Multi-Tenant Isolation
+            Gratis 14 hari, tanpa kartu kredit
           </div>
           <p className="text-4xl font-extrabold tracking-tight text-foreground leading-tight">
-            Multi-tenant B2B platform built for remote workflows, selfie verification, and precise resource tracking.
+            Absensi, gaji, dan stok tim kamu. Beres dalam satu tempat.
           </p>
           <p className="text-gray-500 text-sm leading-relaxed">
-            Register your company workspace and get complete control over schedules, timesheets, payroll reports, and inventory assets.
+            Setelah daftar, kamu langsung dibawa ke dashboard admin. Impor data karyawan dari Excel, atur shift, dan undang tim lewat kode undangan. Data tiap perusahaan terisolasi, tidak bisa dilihat perusahaan lain.
           </p>
         </div>
         <div className="text-xs font-mono text-gray-400 uppercase tracking-widest">
-          SECURE SECTOR // MULTI-TENANT ISOLATION v1.0
+          Dibangun di Indonesia // support bahasa Indonesia
         </div>
       </div>
 
@@ -59,10 +76,6 @@ export default function RegisterClient() {
         {/* Glow circles */}
         <div className="absolute -top-32 -left-32 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-        
-        {/* Background Typography Watermarks */}
-        <div className="absolute right-8 top-12 font-mono text-[90px] font-extrabold text-gray-100/40 leading-none select-none tracking-tighter pointer-events-none uppercase hidden sm:block">APEX</div>
-        <div className="absolute left-8 bottom-12 font-mono text-[90px] font-extrabold text-gray-100/40 leading-none select-none tracking-tighter pointer-events-none uppercase hidden sm:block">CREATE</div>
 
         {/* Mobile-only logo */}
         <div className="lg:hidden flex items-center gap-2 mb-6 select-none">
@@ -72,27 +85,18 @@ export default function RegisterClient() {
           <span className="font-mono tracking-widest text-sm font-bold uppercase text-foreground">APEX</span>
         </div>
 
-        <div className="w-full max-w-md mb-3">
-          <Breadcrumbs items={[{ label: 'Register', href: '/register' }]} />
-        </div>
-
         <div className="w-full max-w-md bg-white border border-border/80 rounded-lg shadow-xl shadow-gray-100/40 p-8 z-10 relative">
-          <div className="absolute -top-3 left-6 px-2 py-0.5 bg-orange-50 border border-primary/20 text-primary text-[8px] font-mono font-bold tracking-widest uppercase rounded-[1px] select-none">
-            Provisioning Node
-          </div>
-
           <div className="mb-8 text-left">
-            {/* Single Clear H1 Heading */}
-            <h1 className="text-xl font-bold tracking-tight text-foreground uppercase font-sans">
-              Create Workspace Node
+            <h1 className="text-xl font-bold tracking-tight text-foreground font-sans">
+              Daftar workspace baru
             </h1>
-            <p className="text-xs text-gray-500 mt-1">Register your enterprise workspace for full operational control.</p>
+            <p className="text-xs text-gray-500 mt-1">Cuma butuh 1 menit. Langsung bisa dipakai setelah ini.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-mono uppercase text-gray-500 mb-1" htmlFor="companyName">
-                Company Name
+                Nama Perusahaan / Usaha
               </label>
               <input
                 id="companyName"
@@ -100,15 +104,17 @@ export default function RegisterClient() {
                 type="text"
                 required
                 disabled={isPending}
+                value={companyName}
+                onChange={(e) => handleCompanyName(e.target.value)}
                 className="w-full px-3 py-2 bg-white border border-border rounded-md text-sm focus:outline-none focus:border-primary disabled:opacity-50 text-foreground font-sans placeholder:text-gray-300"
-                placeholder="Acme Corporation"
+                placeholder="Contoh: Laundry Berkah Jaya"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-mono uppercase text-gray-500 mb-1" htmlFor="slug">
-                  Company Slug
+                  Alamat Workspace
                 </label>
                 <input
                   id="slug"
@@ -116,13 +122,19 @@ export default function RegisterClient() {
                   type="text"
                   required
                   disabled={isPending}
+                  value={slug}
+                  onChange={(e) => {
+                    setSlugTouched(true)
+                    setSlug(slugify(e.target.value))
+                  }}
                   className="w-full px-3 py-2 bg-white border border-border rounded-md text-xs font-mono focus:outline-none focus:border-primary disabled:opacity-50 text-foreground placeholder:text-gray-300"
-                  placeholder="acme-corp"
+                  placeholder="laundry-berkah"
                 />
+                <p className="text-[10px] text-gray-400 mt-1">Otomatis dari nama usaha, boleh diedit. Huruf kecil + angka.</p>
               </div>
               <div>
                 <label className="block text-xs font-mono uppercase text-gray-500 mb-1" htmlFor="category">
-                  Industry Category
+                  Jenis Usaha
                 </label>
                 <select
                   id="category"
@@ -131,19 +143,19 @@ export default function RegisterClient() {
                   disabled={isPending}
                   className="w-full px-3 py-2 bg-white border border-border rounded-md text-xs focus:outline-none focus:border-primary disabled:opacity-50 text-foreground"
                 >
-                  <option value="corporate">Corporate</option>
-                  <option value="school">School</option>
-                  <option value="fnb">Food & Beverage</option>
-                  <option value="retail">Retail</option>
-                  <option value="clinic">Clinic</option>
-                  <option value="ngo">NGO</option>
+                  <option value="fnb">Kuliner / F&B</option>
+                  <option value="retail">Retail / Toko</option>
+                  <option value="school">Sekolah / Kursus</option>
+                  <option value="clinic">Klinik / Kesehatan</option>
+                  <option value="ngo">Organisasi / Komunitas</option>
+                  <option value="corporate">Kantor / Perusahaan</option>
                 </select>
               </div>
             </div>
 
             <div>
               <label className="block text-xs font-mono uppercase text-gray-500 mb-1" htmlFor="adminName">
-                Administrator Name
+                Nama Kamu (Pemilik / Admin)
               </label>
               <input
                 id="adminName"
@@ -152,13 +164,13 @@ export default function RegisterClient() {
                 required
                 disabled={isPending}
                 className="w-full px-3 py-2 bg-white border border-border rounded-md text-sm focus:outline-none focus:border-primary disabled:opacity-50 text-foreground font-sans placeholder:text-gray-300"
-                placeholder="Primary Administrator"
+                placeholder="Nama lengkap"
               />
             </div>
 
             <div>
               <label className="block text-xs font-mono uppercase text-gray-500 mb-1" htmlFor="email">
-                Admin Email
+                Email
               </label>
               <input
                 id="email"
@@ -167,7 +179,7 @@ export default function RegisterClient() {
                 required
                 disabled={isPending}
                 className="w-full px-3 py-2 bg-white border border-border rounded-md text-sm focus:outline-none focus:border-primary disabled:opacity-50 text-foreground font-sans placeholder:text-gray-300"
-                placeholder="admin@company.com"
+                placeholder="kamu@email.com"
               />
             </div>
 
@@ -175,15 +187,27 @@ export default function RegisterClient() {
               <label className="block text-xs font-mono uppercase text-gray-500 mb-1" htmlFor="password">
                 Password
               </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                disabled={isPending}
-                className="w-full px-3 py-2 bg-white border border-border rounded-md text-sm focus:outline-none focus:border-primary disabled:opacity-50 text-foreground font-sans placeholder:text-gray-300"
-                placeholder="••••••••"
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  minLength={8}
+                  disabled={isPending}
+                  className="w-full px-3 py-2 pr-10 bg-white border border-border rounded-md text-sm focus:outline-none focus:border-primary disabled:opacity-50 text-foreground font-sans placeholder:text-gray-300"
+                  placeholder="Minimal 8 karakter"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                  aria-label={showPassword ? 'Sembunyikan password' : 'Lihat password'}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              <p className="text-[10px] text-gray-400 mt-1">Minimal 8 karakter. Boleh paste, tidak perlu simbol aneh.</p>
             </div>
 
             {error && (
@@ -197,17 +221,17 @@ export default function RegisterClient() {
               disabled={isPending}
               className="w-full py-2.5 px-4 bg-primary hover:bg-primary-hover text-white font-mono uppercase text-xs font-semibold rounded-md transition-colors focus:outline-none disabled:opacity-50 mt-4 cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98]"
             >
-              {isPending ? 'Processing...' : 'Register Company'}
+              {isPending ? 'Menyiapkan workspace...' : 'Daftar Sekarang'}
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </form>
 
           <div className="mt-6 pt-6 border-t border-border text-center flex flex-col gap-2">
             <Link href="/login" className="text-xs text-primary hover:underline font-mono uppercase font-bold">
-              ALREADY REGISTERED? SIGN IN
+              Sudah punya akun? Masuk di sini
             </Link>
             <Link href="/join" className="text-xs text-gray-500 hover:text-foreground hover:underline font-mono uppercase">
-              HAVE AN INVITATION CODE? JOIN AS EMPLOYEE
+              Dapat kode undangan? Gabung sebagai karyawan
             </Link>
           </div>
         </div>
