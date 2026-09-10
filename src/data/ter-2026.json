@@ -1,0 +1,59 @@
+{
+  "ter": {
+    "categoryA": {
+      "TK/0": [],
+      "TK/1": [],
+      "TK/2": [],
+      "TK/3": [],
+      "K/0": [],
+      "K/1": [],
+      "K/2": [],
+      "K/3": []
+    },
+    "categoryB": {
+      "TK/0": [],
+      "TK/1": [],
+      "TK/2": [],
+      "TK/3": [],
+      "K/0": [],
+      "K/1": [],
+      "K/2": [],
+      "K/3": []
+    },
+    "categoryC": {
+      "rule": "UNVERIFIED — category C = category B rate x 120% (per PMK 168/2023); special construction rates 0.5%/0.75% NOT verified",
+      "multiplier": 1.2
+    },
+    "boundaryConvention": "UNVERIFIED — assumed min INCLUSIVE, max EXCLUSIVE per common TER table layout; MUST be verified against PMK 168/2023 before production use"
+  },
+  "ptkp": {
+    "TK/0": 54000000,
+    "TK/1": 58500000,
+    "TK/2": 63000000,
+    "TK/3": 67500000,
+    "K/0": 58500000,
+    "K/1": 63000000,
+    "K/2": 67500000,
+    "K/3": 72000000
+  },
+  "bpjs": {
+    "jht": { "employer": 0.037, "employee": 0.02 },
+    "jkk": { "classes": [0.0024, 0.0089, 0.0113, 0.0157, 0.0181] },
+    "jkm": { "employer": 0.003 },
+    "jp": { "employer": 0.02, "employee": 0.01, "cap": null },
+    "kesehatan": { "employer": 0.04, "employee": 0.01, "cap": null }
+  },
+  "asOf": "2026-09",
+  "sources": [],
+  "caveats": [
+    "PLACEHOLDER FILE — bracket tables are EMPTY by design until research agent delivers verified values",
+    "TER tables must come from PP 58/2023 / PMK 168/2023 official source; never hand-typed"
+  ],
+  "unverified": [
+    "ALL category A brackets",
+    "ALL category B brackets",
+    "JP wage cap 2026",
+    "JKN/Kesehatan wage cap 2026",
+    "Category C multiplier 1.2"
+  ]
+}

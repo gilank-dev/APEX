@@ -1,139 +1,87 @@
--- Priority 1 RLS Fixes
--- Addresses: WITH CHECK gaps, missing INSERT policies, auth_id security gap
--- Strategy: Drop + recreate FOR ALL policies with WITH CHECK, add missing INSERT/UPDATE policies
---
--- Safety: Each policy is wrapped in IF EXISTS/IF NOT EXISTS checks.
---         All FOR ALL policies get both USING and WITH CHECK to prevent arbitrary inserts.
+-- Priority 1: RLS policy fixes
+-- Drop/recreate approach for policies missing WITH CHECK clauses
+-- All new policies use DROP IF EXISTS + CREATE to be idempotent
 
 -- ============================================================
--- 1. attendance_logs — replace FOR ALL with WITH CHECK
---    Current: FOR ALL USING — no protection against arbitrary inserts
---    Fix: Recreate with WITH CHECK using same owner/member logic
+-- 1. COMPANIES: Add INSERT policy (was missing entirely)
 -- ============================================================
+DROP POLICY IF EXISTS companies_insert_admin ON public.companies;
+CREATE POLICY companies_insert_admin ON public.companies
+  FOR INSERT
+  WITH CHECK (
+    auth.uid() IN (
+      SELECT u.auth_id FROM public.users u
+      JOIN public.roles r ON u.role_id = r.id
+      WHERE r.name IN ('Super Admin', 'Admin')
+    )
+  );
 
-DROP POLICY IF EXISTS "attendance_logs_own_company" ON public.attendance_logs;
+-- ============================================================
+-- 2. COMPANIES: Add DELETE policy (was missing entirely)
+-- ============================================================
+DROP POLICY IF EXISTS companies_delete_admin ON public.companies;
+CREATE POLICY companies_delete_admin ON public.companies
+  FOR DELETE
+  USING (
+    auth.uid() IN (
+      SELECT u.auth_id FROM public.users u
+      JOIN public.roles r ON u.role_id = r.id
+      WHERE r.name IN ('Super Admin', 'Admin')
+    )
+  );
 
-CREATE POLICY "attendance_logs_own_company"
-  ON public.attendance_logs
+-- ============================================================
+-- 3. SHIFTS TEMPLATES: Drop old policy, recreate with WITH CHECK
+-- ============================================================
+DROP POLICY IF EXISTS shift_templates_modify_admin ON public.shift_templates;
+CREATE POLICY shift_templates_modify_admin ON public.shift_templates
   FOR ALL
-  USING (company_id = get_company_id())
-  WITH CHECK (company_id = get_company_id());
+  USING (
+    company_id = public.get_company_id()
+    AND public.get_user_role() IN ('Super Admin', 'Admin', 'Manager')
+  )
+  WITH CHECK (
+    company_id = public.get_company_id()
+    AND public.get_user_role() IN ('Super Admin', 'Admin', 'Manager')
+  );
 
 -- ============================================================
--- 2. tasks — replace FOR ALL with WITH CHECK
---    Current: FOR ALL USING — unprotected inserts
---    Fix: Recreate with WITH CHECK
+-- 4. SHIFT ASSIGNMENTS: Drop old policy, recreate with WITH CHECK
 -- ============================================================
-
-DROP POLICY IF EXISTS "tasks_own_company" ON public.tasks;
-
-CREATE POLICY "tasks_own_company"
-  ON public.tasks
+DROP POLICY IF EXISTS shift_assignments_modify_admin ON public.shift_assignments;
+CREATE POLICY shift_assignments_modify_admin ON public.shift_assignments
   FOR ALL
-  USING (company_id = get_company_id())
-  WITH CHECK (company_id = get_company_id());
+  USING (
+    company_id = public.get_company_id()
+    AND public.get_user_role() IN ('Super Admin', 'Admin', 'Manager')
+  )
+  WITH CHECK (
+    company_id = public.get_company_id()
+    AND public.get_user_role() IN ('Super Admin', 'Admin', 'Manager')
+  );
 
 -- ============================================================
--- 3. shifts — replace FOR ALL with WITH CHECK
---    Current: FOR ALL USING — unprotected inserts
---    Fix: Recreate with WITH CHECK
+-- 5. KASBON REQUESTS: Add UPDATE policy (Admin/Owner only)
 -- ============================================================
-
-DROP POLICY IF EXISTS "shifts_own_company" ON public.shifts;
-
-CREATE POLICY "shifts_own_company"
-  ON public.shifts
-  FOR ALL
-  USING (company_id = get_company_id())
-  WITH CHECK (company_id = get_company_id());
-
--- ============================================================
--- 4. companies — add INSERT policy (currently missing)
---    Only Owner and Super Admin can create companies
--- ============================================================
-
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE tablename = 'companies'
-      AND policyname = 'companies_insert_owner_admin'
-  ) THEN
-    CREATE POLICY "companies_insert_owner_admin"
-      ON public.companies
-      FOR INSERT
-      WITH CHECK (
-        get_user_role() IN ('owner', 'super_admin')
-      );
-  END IF;
-END
-$$;
+DROP POLICY IF EXISTS kasbon_requests_update_admin ON public.kasbon_requests;
+CREATE POLICY kasbon_requests_update_admin ON public.kasbon_requests
+  FOR UPDATE
+  USING (
+    company_id = public.get_company_id()
+    AND public.get_user_role() IN ('Super Admin', 'Admin', 'Owner')
+  )
+  WITH CHECK (
+    company_id = public.get_company_id()
+    AND public.get_user_role() IN ('Super Admin', 'Admin', 'Owner')
+  );
 
 -- ============================================================
--- 5. companies — add DELETE policy (currently missing)
---    Only Owner can delete companies
+-- 6. INVENTORY ASSETS: Add INSERT policy (was missing)
 -- ============================================================
-
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE tablename = 'companies'
-      AND policyname = 'companies_delete_owner_only'
-  ) THEN
-    CREATE POLICY "companies_delete_owner_only"
-      ON public.companies
-      FOR DELETE
-      USING (
-        get_user_role() = 'owner'
-      );
-  END IF;
-END
-$$;
-
--- ============================================================
--- 6. inventory_assets — add INSERT policy (currently missing)
---    Company members can insert into their own company
--- ============================================================
-
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE tablename = 'inventory_assets'
-      AND policyname = 'inventory_assets_insert_company'
-  ) THEN
-    CREATE POLICY "inventory_assets_insert_company"
-      ON public.inventory_assets
-      FOR INSERT
-      WITH CHECK (company_id = get_company_id());
-  END IF;
-END
-$$;
-
--- ============================================================
--- 7. kasbon_requests — add Admin-only UPDATE policy
---    Only Admin/Owner can approve/reject kasbon requests
--- ============================================================
-
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE tablename = 'kasbon_requests'
-      AND policyname = 'kasbon_requests_update_admin'
-  ) THEN
-    CREATE POLICY "kasbon_requests_update_admin"
-      ON public.kasbon_requests
-      FOR UPDATE
-      USING (
-        company_id = get_company_id()
-        AND get_user_role() IN ('owner', 'super_admin', 'admin')
-      )
-      WITH CHECK (
-        company_id = get_company_id()
-        AND get_user_role() IN ('owner', 'super_admin', 'admin')
-      );
-  END IF;
-END
-$$;
+DROP POLICY IF EXISTS inventory_assets_insert_company ON public.inventory_assets;
+CREATE POLICY inventory_assets_insert_company ON public.inventory_assets
+  FOR INSERT
+  WITH CHECK (
+    company_id = public.get_company_id()
+    AND public.get_user_role() IN ('Super Admin', 'Admin', 'Manager')
+  );

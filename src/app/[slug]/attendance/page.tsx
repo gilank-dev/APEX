@@ -7,6 +7,8 @@ import { useAppStore } from '@/lib/store'
 import imageCompression from 'browser-image-compression'
 import SkeletonLoader from '@/components/shared/SkeletonLoader'
 import { Camera, Clock, User, CheckCircle2, ShieldCheck, X } from 'lucide-react'
+import { gooeyToast } from 'goey-toast'
+import { hashSelfie } from '@/lib/selfie-hashing'
 import AttendanceRecapView from './AttendanceRecapView'
 
 interface UserProfile {
@@ -25,6 +27,8 @@ interface AttendanceLog {
   clock_in_time: string
   clock_out_time: string | null
   photo_url: string | null
+  photo_hash: string | null
+  photo_salt: string | null
   location: any
   users: {
     full_name: string
@@ -145,7 +149,7 @@ export default function AttendancePage() {
         videoRef.current.srcObject = stream
       }
     } catch (err) {
-      alert('Failed to access front camera.')
+      gooeyToast.error('Failed to access front camera.')
     }
   }
 
@@ -224,7 +228,7 @@ export default function AttendancePage() {
   const handleClockIn = async () => {
     if (!profile) return
     if (!photoData) {
-      alert('Face selfie is required.')
+      gooeyToast.warning('Face selfie is required.')
       return
     }
 
@@ -247,6 +251,7 @@ export default function AttendancePage() {
 
       // 2. Upload to storage (private bucket; store the object path, never base64 in DB)
       let photoPath: string | null = null
+      let selfieHashResult: { hash: string; salt: string } | null = null
       if (!isOffline) {
         const fileExt = 'jpg'
         const filePath = `${profile.company_id}/attendance/${profile.id}_${Date.now()}.${fileExt}`
@@ -255,10 +260,17 @@ export default function AttendancePage() {
           .upload(filePath, compressedFile)
 
         if (uploadError) {
-          alert('Gagal mengunggah foto selfie. Periksa koneksi Anda lalu coba lagi.')
+          gooeyToast.error('Gagal mengunggah foto selfie. Periksa koneksi Anda lalu coba lagi.')
           return
         }
         photoPath = filePath
+        // Integrity hash over the EXACT stored bytes (compressed file)
+        const h = await hashSelfie(compressedFile)
+        selfieHashResult = { hash: h.hash, salt: h.salt }
+      } else {
+        // Offline: hash the data URL that will be queued, so sync and capture agree
+        const h = await hashSelfie(imageFile)
+        selfieHashResult = { hash: h.hash, salt: h.salt }
       }
 
       // 3. Create Payload with dynamic location
@@ -269,18 +281,20 @@ export default function AttendancePage() {
         company_id: profile.company_id,
         clock_in_time: new Date().toISOString(),
         photo_url: photoPath ?? photoData,
+        photo_hash: selfieHashResult?.hash ?? null,
+        photo_salt: selfieHashResult?.salt ?? null,
         location: geoLoc, // Pass the real GPS coordinates!
       }
 
       if (isOffline) {
         addToQueue({ type: 'clock_in', payload })
-        alert('Attendance request queued offline!')
+        gooeyToast.info('Attendance request queued offline!')
       } else {
         const { error } = await supabase.from('attendance_logs').insert(payload)
         if (error) {
           // Unique index: one open session per user — already clocked in
           if (error.code === '23505') {
-            alert('Anda masih memiliki sesi absensi aktif. Clock out dulu sebelum clock in lagi.')
+            gooeyToast.error('Anda masih memiliki sesi absensi aktif. Clock out dulu sebelum clock in lagi.')
           } else {
             throw error
           }
@@ -290,7 +304,7 @@ export default function AttendancePage() {
       setPhotoData(null)
       fetchProfileAndLogs()
     } catch (err: any) {
-      alert(`Failed to clock in: ${err.message}`)
+      gooeyToast.error(`Failed to clock in: ${err.message}`)
     } finally {
       setLoading(false)
     }
@@ -309,7 +323,7 @@ export default function AttendancePage() {
     try {
       if (isOffline) {
         addToQueue({ type: 'clock_out', payload })
-        alert('Clock out request queued offline!')
+        gooeyToast.info('Clock out request queued offline!')
       } else {
         // Only close a session that is still open; trigger enforces append-only
         const { data: updated, error } = await supabase
@@ -322,18 +336,18 @@ export default function AttendancePage() {
           .select('id')
         if (error) {
           if (error.code === 'P0001') {
-            alert('Sesi absensi ini sudah ditutup sebelumnya.')
+            gooeyToast.warning('Sesi absensi ini sudah ditutup sebelumnya.')
           } else {
             throw error
           }
         } else if (!updated || updated.length === 0) {
-          alert('Sesi absensi ini sudah ditutup sebelumnya.')
+          gooeyToast.warning('Sesi absensi ini sudah ditutup sebelumnya.')
         }
       }
 
       fetchProfileAndLogs()
     } catch (err: any) {
-      alert(`Failed to clock out: ${err.message}`)
+      gooeyToast.error(`Failed to clock out: ${err.message}`)
     } finally {
       setLoading(false)
     }
@@ -676,6 +690,14 @@ export default function AttendancePage() {
                       <ShieldCheck className="w-3.5 h-3.5" /> VERIFIED BY SELFIE CAPTURE
                     </p>
                     <p className="text-[10px] text-gray-400 mt-1">STATUS: OK // SELFIE VERIFIED</p>
+                    {selectedLog.photo_hash && (
+                      <p className="text-[10px] text-gray-400 mt-2 break-all">
+                        SHA-256: {selectedLog.photo_hash}
+                      </p>
+                    )}
+                    {selectedLog.photo_hash && !selectedLog.photo_salt && (
+                      <p className="text-[10px] text-gray-400">SALT: N/A (legacy log)</p>
+                    )}
                   </div>
                 </div>
 
