@@ -150,6 +150,8 @@ describe('APEX Features & P0 Sprint Test Suite', () => {
 
       for (const action of leaveActions) {
         const hasRequireManager = action.body.includes('requireManager(')
+          || action.body.includes('requireModuleAccess(')
+          || action.body.includes('requireMemberModuleAccess(')
         const hasGetCallerProfile = action.body.includes('getCallerProfile(')
         assert.ok(
           hasRequireManager || hasGetCallerProfile,

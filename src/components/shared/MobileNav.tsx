@@ -244,7 +244,7 @@ export default function MobileNav({
               <div>
                 <p className="text-sm font-bold text-gray-900 truncate">{fullName}</p>
                 <p className="text-xs font-mono text-gray-400 truncate uppercase mt-0.5">
-                  {roleName} // {companyName}
+                  {roleName}{' // '}{companyName}
                 </p>
               </div>
               <form action="/api/auth/logout" method="POST">

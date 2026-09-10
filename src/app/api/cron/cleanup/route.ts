@@ -1,12 +1,24 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { NextResponse, type NextRequest } from 'next/server'
+import crypto from 'node:crypto'
 
 export async function GET(request: NextRequest) {
   // Authorization check for Vercel Cron
   const authHeader = request.headers.get('authorization')
   const cronSecret = process.env.CRON_SECRET
 
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+  if (!cronSecret) {
+    return new Response('Unauthorized', { status: 401 })
+  }
+
+  // Timing-safe comparison: a plain === leaks secret length/content timing
+  // and is vulnerable to early-exit timing analysis.
+  const expected = `Bearer ${cronSecret}`
+  const a = Buffer.from(authHeader || '', 'utf8')
+  const b = Buffer.from(expected, 'utf8')
+  const authorized = a.length === b.length && crypto.timingSafeEqual(a, b)
+
+  if (!authorized) {
     return new Response('Unauthorized', { status: 401 })
   }
 

@@ -2,7 +2,7 @@
 
 import { createAdminClient, createClient } from './supabase/server'
 import { revalidatePath } from 'next/cache'
-import { effectiveTier, getMaxAllowedEmployees } from './entitlements'
+import { effectiveTier, getMaxAllowedEmployees, isProModule } from './entitlements'
 import { getCallerProfile, requireManager } from '@/lib/authz'
 import { parseCsv, rowsToEmployees } from './csv'
 import crypto from 'node:crypto'
@@ -11,11 +11,18 @@ export async function updateModulesAction(companyId: string, slug: string, modul
   const authz = await requireManager(companyId)
   if (!authz.ok) return { error: authz.error }
 
+  // Entitlement filter: a Free company cannot enable Pro modules no matter
+  // what the client sends. Pro companies keep their full selection.
+  const company = authz.profile
+  const allowed = company.is_pro
+    ? modules
+    : modules.filter((m) => !isProModule(m))
+
   const adminClient = createAdminClient()
 
   const { error } = await adminClient
     .from('companies')
-    .update({ active_modules: modules })
+    .update({ active_modules: allowed })
     .eq('id', companyId)
 
   if (error) {
@@ -157,6 +164,50 @@ export async function resetDummyPasswordAction(userId: string, companySlug: stri
 
   revalidatePath(`/${companySlug}/admin`)
   return { success: true, password }
+}
+
+export async function setEmployeeActiveAction(userId: string, companySlug: string, isActive: boolean) {
+  const profile = await getCallerProfile()
+  if (!profile) {
+    return { error: 'Tidak terautentikasi.' }
+  }
+  if (!profile.is_admin && profile.role_name !== 'Admin') {
+    return { error: 'Akses ditolak.' }
+  }
+
+  const adminClient = createAdminClient()
+
+  const { data: target } = await adminClient
+    .from('users')
+    .select('id, company_id, full_name, roles(is_admin)')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (!target) {
+    return { error: 'Pengguna tidak ditemukan.' }
+  }
+  if (profile.company_id !== target.company_id) {
+    return { error: 'Akses ditolak.' }
+  }
+  // Guard: never deactivate yourself or another admin
+  if (target.id === profile.user_id) {
+    return { error: 'Tidak dapat mengubah status akun sendiri.' }
+  }
+  if ((target.roles as any)?.is_admin) {
+    return { error: 'Tidak dapat menonaktifkan akun Admin.' }
+  }
+
+  const { error } = await adminClient
+    .from('users')
+    .update({ is_active: isActive })
+    .eq('id', userId)
+
+  if (error) {
+    return { error: 'Gagal memperbarui status: ' + error.message }
+  }
+
+  revalidatePath(`/${companySlug}/admin`)
+  return { success: true }
 }
 
 export async function regenerateInviteCodeAction(roleId: string, companySlug: string) {

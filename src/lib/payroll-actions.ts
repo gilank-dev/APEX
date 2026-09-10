@@ -2,7 +2,7 @@
 
 import { createAdminClient } from './supabase/server'
 import { revalidatePath } from 'next/cache'
-import { requireManager } from '@/lib/authz'
+import { requireManager, requireModuleAccess } from '@/lib/authz'
 
 export interface PayrollSettingInput {
   user_id: string
@@ -17,7 +17,7 @@ export async function saveBulkPayrollSettingsAction(
   slug: string,
   settings: PayrollSettingInput[]
 ) {
-  const authz = await requireManager(companyId)
+  const authz = await requireModuleAccess(companyId, 'payroll')
   if (!authz.ok) return { error: authz.error }
 
   if (!settings || settings.length === 0) {

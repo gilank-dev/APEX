@@ -45,6 +45,7 @@ describe('APEX Authorization Guard Test Suite', () => {
       'src/lib/shift-actions.ts',
       'src/lib/payroll-actions.ts',
       'src/lib/admin-actions.ts',
+      'src/lib/kasbon-actions.ts',
     ]
 
     function extractExportedActions(filePath) {
@@ -79,10 +80,12 @@ describe('APEX Authorization Guard Test Suite', () => {
 
     it('ensures every exported action has an authorization guard before createAdminClient', () => {
       const allActions = actionFiles.flatMap(extractExportedActions)
-      assert.strictEqual(allActions.length, 14, 'Expected exactly 14 exported actions across the 3 files')
+      assert.strictEqual(allActions.length, 18, 'Expected exactly 18 exported actions across the 4 files')
 
       for (const action of allActions) {
         const hasRequireManager = action.body.includes('requireManager(')
+          || action.body.includes('requireModuleAccess(')
+          || action.body.includes('requireMemberModuleAccess(')
         const hasGetCallerProfile = action.body.includes('getCallerProfile()')
 
         // 1 & 3. Action must have an authorization guard
@@ -93,8 +96,10 @@ describe('APEX Authorization Guard Test Suite', () => {
 
         // 2. createAdminClient() appears only AFTER the guard call
         const reqManagerIdx = action.body.indexOf('requireManager(')
+        const reqModuleIdx = action.body.indexOf('requireModuleAccess(')
+        const reqMemberModuleIdx = action.body.indexOf('requireMemberModuleAccess(')
         const getProfileIdx = action.body.indexOf('getCallerProfile()')
-        const guardIndices = [reqManagerIdx, getProfileIdx].filter((i) => i !== -1)
+        const guardIndices = [reqManagerIdx, reqModuleIdx, reqMemberModuleIdx, getProfileIdx].filter((i) => i !== -1)
         const firstGuardIdx = Math.min(...guardIndices)
 
         const adminClientIdx = action.body.indexOf('createAdminClient()')

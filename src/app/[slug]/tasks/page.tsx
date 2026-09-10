@@ -4,6 +4,7 @@ import { useState, useEffect, useTransition } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useAppStore } from '@/lib/store'
 import SkeletonLoader from '@/components/shared/SkeletonLoader'
+import { gooeyToast } from 'goey-toast'
 
 interface UserOption {
   id: string
@@ -40,10 +41,6 @@ export default function TasksPage() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    fetchTasksData()
-  }, [])
 
   const fetchTasksData = async () => {
     setLoading(true)
@@ -83,6 +80,13 @@ export default function TasksPage() {
     }
   }
 
+  useEffect(() => {
+    // Deferred so the synchronous setLoading(true) inside the fetcher does
+    // not fire as a synchronous setState within this effect.
+    queueMicrotask(() => fetchTasksData())
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Update Status Action
   const updateTaskStatus = async (taskId: string, newStatus: Task['status']) => {
     const task = tasks.find((t) => t.id === taskId)
@@ -93,7 +97,7 @@ export default function TasksPage() {
     const isAdminOrManager = currentUser?.roles?.is_admin || currentUser?.roles?.name === 'Manager'
 
     if (!isOwner && !isAdminOrManager) {
-      alert('You can only modify the status of tasks assigned to you.')
+      gooeyToast.warning('You can only modify the status of tasks assigned to you.')
       return
     }
 
@@ -116,7 +120,7 @@ export default function TasksPage() {
         if (error) throw error
       }
     } catch (err: any) {
-      alert(`Failed to update status: ${err.message}`)
+      gooeyToast.error(`Failed to update status: ${err.message}`)
       fetchTasksData() // Revert
     }
   }
@@ -151,7 +155,7 @@ export default function TasksPage() {
       try {
         if (isOffline) {
           addToQueue({ type: 'create_task', payload })
-          alert('Task added to offline sync queue!')
+          gooeyToast.info('Task added to offline sync queue!')
         } else {
           const { error } = await supabase.from('tasks').insert(payload)
           if (error) throw error

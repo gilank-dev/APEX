@@ -52,7 +52,7 @@ export default function NotFound() {
 
         {/* Telemetry Console Frame */}
         <div className="text-left bg-black/40 border border-white/10 rounded-[2px] p-4 font-mono text-[11px] text-gray-400 space-y-1.5">
-          <div className="text-gray-500">// TELEMETRY DIAGNOSTIC</div>
+          <div className="text-gray-500">{'// TELEMETRY DIAGNOSTIC'}</div>
           <div className="text-orange-400">CLUSTER: APEX_MAIN_GATEWAY_V1</div>
           <div className="text-gray-400">RESOLVER: SUBGRAPH_LOOKUP_FAILED</div>
           <div className="text-gray-500">RETRY_ACTION: RETURN_TO_CANONICAL_INDEX</div>

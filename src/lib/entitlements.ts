@@ -43,6 +43,66 @@ export function getMaxAllowedEmployees(company: CompanyEntitlements | null | und
   return Infinity
 }
 
+// ---------------------------------------------------------------------------
+// Module entitlements
+// ---------------------------------------------------------------------------
+
+// Modules available on the Free tier. Everything else requires Pro or higher.
+export const FREE_MODULES = ['attendance', 'tasks'] as const
+
+// Modules that require an active Pro plan (or trial) on top of Free.
+export const PRO_MODULES = [
+  'shifts',
+  'leave',
+  'payroll',
+  'inventory',
+  'kasbon',
+] as const
+
+// Modules that only exist for specific industry categories (dynamic features).
+// Pro-gated as well: they are premium widgets per the pricing page.
+export const INDUSTRY_MODULES = [
+  'payroll-engine',
+  'live-attendance-selfie',
+  'multi-tier-approval',
+  'student-database',
+  'tuition-billing',
+  'grade-book-system',
+  'teacher-scheduling',
+  'cash-drawer-audit',
+  'fifo-inventory',
+  'dynamic-roster',
+  'live-sku-tracking',
+  'stock-opname',
+  'cashier-shift-handover',
+  'lite-emr',
+  'prescription-tracker',
+  'patient-queue-system',
+  'insurance-billing-flow',
+  'fund-allocation-tracker',
+  'donor-crm',
+  'beneficiary-database',
+] as const
+
+export function isProModule(moduleId: string): boolean {
+  return (
+    (PRO_MODULES as readonly string[]).includes(moduleId) ||
+    (INDUSTRY_MODULES as readonly string[]).includes(moduleId)
+  )
+}
+
+// The effective module list a company may actually use: a Free company keeps
+// only Free modules regardless of what is stored in active_modules. This is the
+// single source of truth for both UI and server actions.
+export function resolveEntitledModules(
+  company: (CompanyEntitlements & { active_modules?: string[] | null }) | null | undefined
+): string[] {
+  if (!company) return [...FREE_MODULES]
+  const stored = company.active_modules || []
+  if (isProOrHigher(company)) return stored
+  return stored.filter((m) => !isProModule(m))
+}
+
 // Format trial end date to Indonesian locale: e.g. "23 September 2026"
 export function formatTrialDate(dateStrOrDate: string | Date): string {
   const date = typeof dateStrOrDate === 'string' ? new Date(dateStrOrDate) : dateStrOrDate

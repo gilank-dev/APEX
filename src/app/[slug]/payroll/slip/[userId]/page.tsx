@@ -164,7 +164,7 @@ export default async function PayslipPage({ params, searchParams }: SlipPageProp
                 </span>
               </div>
               <p className="text-xs text-gray-500 font-mono mt-1">
-                SYSTEM ID: {company.slug.toUpperCase()} // OFFICIAL PAYSLIP
+                SYSTEM ID: {company.slug.toUpperCase()}{' // OFFICIAL PAYSLIP'}
               </p>
             </div>
 

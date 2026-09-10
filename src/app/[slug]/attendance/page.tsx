@@ -55,10 +55,6 @@ export default function AttendancePage() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [selectedLog, setSelectedLog] = useState<AttendanceLog | null>(null)
 
-  useEffect(() => {
-    fetchProfileAndLogs()
-  }, [])
-
   const fetchProfileAndLogs = async () => {
     setLoading(true)
     try {
@@ -139,6 +135,13 @@ export default function AttendancePage() {
     }
   }
 
+  useEffect(() => {
+    // Deferred so the synchronous setLoading(true) inside the fetcher does
+    // not fire as a synchronous setState within this effect.
+    queueMicrotask(() => fetchProfileAndLogs())
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Camera Handler
   const startCamera = async () => {
     setCameraActive(true)
@@ -217,7 +220,10 @@ export default function AttendancePage() {
         if (!cancelled) setSelectedPhotoSrc(src)
       })
     } else {
-      setSelectedPhotoSrc(null)
+      // Deferred: synchronous setState in an effect body can cascade renders.
+      queueMicrotask(() => {
+        if (!cancelled) setSelectedPhotoSrc(null)
+      })
     }
     return () => {
       cancelled = true

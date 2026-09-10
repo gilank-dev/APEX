@@ -34,7 +34,7 @@ export async function POST() {
   }
 
   const foundAdmin = existingData?.users?.find(
-    (u) => u.email === email || u.user_metadata?.role === 'super-admin'
+    (u) => u.email === email || u.app_metadata?.role === 'super-admin'
   )
 
   if (foundAdmin) {

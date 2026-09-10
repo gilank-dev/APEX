@@ -16,6 +16,8 @@ interface SubscriptionLayoutProps {
   company: Company
 }
 
+// Upgrade request code: APX-XXXX-YYYYYY. Uses Web Crypto (runs in browser
+// and Node) with rejection sampling to avoid modulo bias.
 function generateRequestCode(slug: string): string {
   const cleanSlug = (slug || 'APEX')
     .replace(/[^a-zA-Z0-9]/g, '')
@@ -23,9 +25,14 @@ function generateRequestCode(slug: string): string {
     .toUpperCase()
     .padEnd(4, 'X')
   const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  const buf = new Uint32Array(1)
   let randomPart = ''
-  for (let i = 0; i < 6; i++) {
-    randomPart += chars.charAt(Math.floor(Math.random() * chars.length))
+  while (randomPart.length < 6) {
+    crypto.getRandomValues(buf)
+    // 2^32 % 36 != 0: redraw values that would wrap the alphabet
+    if (buf[0] < Math.floor(4294967296 / 36) * 36) {
+      randomPart += chars.charAt(buf[0] % 36)
+    }
   }
   return `APX-${cleanSlug}-${randomPart}`
 }

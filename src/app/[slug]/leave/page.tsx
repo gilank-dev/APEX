@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { resolveEntitledModules } from '@/lib/entitlements'
 import LeaveClient from './LeaveClient'
 import { LeaveRequest } from '@/lib/leave-actions'
 import { Lock, Sparkles } from 'lucide-react'
@@ -35,9 +36,11 @@ export default async function LeavePage({ params }: LeavePageProps) {
     redirect(`/${company.slug}/dashboard`)
   }
 
+  // Entitlement-filtered: Free companies can never open Pro module pages,
+  // even by typing the URL directly.
+  const entitledModules = resolveEntitledModules(company)
   const isAdminOrManager = !!role.is_admin || role.name === 'Manager'
-  const activeModules: string[] = company.active_modules || []
-  const isModuleActive = activeModules.includes('leave')
+  const isModuleActive = entitledModules.includes('leave')
 
   if (!isModuleActive) {
     return (

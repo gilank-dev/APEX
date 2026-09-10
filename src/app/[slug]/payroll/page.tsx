@@ -1,9 +1,10 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import PayrollClient from './PayrollClient'
-import { EmployeePayrollSetting } from '@/lib/payroll'
+import { isProOrHigher, resolveEntitledModules } from '@/lib/entitlements'
 import { EmployeeSummary, AttendanceLogSummary, ShiftAssignmentSummary } from '@/lib/attendance-recap'
-import { isProOrHigher } from '@/lib/entitlements'
+import { EmployeePayrollSetting } from '@/lib/payroll'
+import PayrollClient from './PayrollClient'
+import ModuleLockScreen from '@/components/shared/ModuleLockScreen'
 
 interface PayrollPageProps {
   params: Promise<{ slug: string }>
@@ -37,10 +38,25 @@ export default async function PayrollPage({ params }: PayrollPageProps) {
 
   const isAdminOrManager = !!role.is_admin || role.name === 'Manager'
 
-  // Entitlement / Pro tier check
+  // Entitlement gate BEFORE any data fetch: requires BOTH an active Pro plan
+  // AND the module enabled in Admin Settings. Either missing -> lock screen.
   const isProOrTrial = isProOrHigher(company)
+  const isModuleActive = resolveEntitledModules(company).includes('payroll')
+  const isUnlocked = isProOrTrial && isModuleActive
 
-  // 1. Fetch employees
+  if (!isUnlocked) {
+    return (
+      <ModuleLockScreen
+        slug={slug}
+        featureName="Payroll-Lite"
+        reason={isModuleActive ? 'upgrade' : 'inactive'}
+        isAdminOrManager={isAdminOrManager}
+        description="Kompilasi gaji bulanan otomatis dari rekap absensi dan jam lembur karyawan tanpa rumus Excel rumit. Cetak slip gaji instan dengan upgrade ke paket Pro."
+      />
+    )
+  }
+
+  // 1. Fetch employees (only reached when the module is unlocked)
   let employeesQuery = supabase
     .from('users')
     .select('id, full_name, email')
@@ -114,7 +130,7 @@ export default async function PayrollPage({ params }: PayrollPageProps) {
     <PayrollClient
       slug={slug}
       companyId={company.id}
-      isProOrTrial={isProOrTrial}
+      isProOrTrial={isUnlocked}
       isAdminOrManager={isAdminOrManager}
       currentUserId={profile.id}
       employees={employees}

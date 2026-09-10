@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import ShiftsClient, { ShiftTemplate, ShiftAssignment, Employee } from './ShiftsClient'
-import { isProOrHigher } from '@/lib/entitlements'
+import { isProOrHigher, resolveEntitledModules } from '@/lib/entitlements'
+import ModuleLockScreen from '@/components/shared/ModuleLockScreen'
 
 interface ShiftsPageProps {
   params: Promise<{ slug: string }>
@@ -51,8 +52,23 @@ export default async function ShiftsPage({ params }: ShiftsPageProps) {
 
   const isAdminOrManager = !!role.is_admin || role.name === 'Manager'
 
-  // Entitlement / Pro tier check (free tier is gated unless trial is active)
+  // Entitlement gate BEFORE any data fetch: requires BOTH an active Pro plan
+  // AND the module enabled in Admin Settings. Either missing -> lock screen.
   const isProOrTrial = isProOrHigher(company)
+  const isModuleActive = resolveEntitledModules(company).includes('shifts')
+  const isUnlocked = isProOrTrial && isModuleActive
+
+  if (!isUnlocked) {
+    return (
+      <ModuleLockScreen
+        slug={slug}
+        featureName="Jadwal Shift"
+        reason={isModuleActive ? 'upgrade' : 'inactive'}
+        isAdminOrManager={isAdminOrManager}
+        description="Atur shift bergilir (Pagi, Siang, Malam), buat jadwal mingguan karyawan tanpa batas, dan rekap jam kerja otomatis dengan upgrade ke paket Pro."
+      />
+    )
+  }
 
   // Fetch shift templates
   let { data: templates } = await supabase
@@ -62,7 +78,7 @@ export default async function ShiftsPage({ params }: ShiftsPageProps) {
     .order('start_time', { ascending: true })
 
   // Auto-seed default templates if empty
-  if ((!templates || templates.length === 0) && isProOrTrial) {
+  if ((!templates || templates.length === 0) && isUnlocked) {
     const adminClient = createAdminClient()
     const defaultTemplates = [
       {
@@ -140,7 +156,7 @@ export default async function ShiftsPage({ params }: ShiftsPageProps) {
     <ShiftsClient
       slug={slug}
       companyId={company.id}
-      isProOrTrial={isProOrTrial}
+      isProOrTrial={isUnlocked}
       isAdminOrManager={isAdminOrManager}
       currentUserId={profile.id}
       initialTemplates={(templates as ShiftTemplate[]) || []}

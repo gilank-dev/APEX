@@ -784,7 +784,7 @@ export default function ShiftsClient({
                   {templates.length === 0 && (
                     <tr>
                       <td colSpan={5} className="py-10 text-center text-gray-400 font-mono text-xs">
-                        Belum ada template shift. Klik "Tambah Template" atau "Seed Bawaan".
+                        Belum ada template shift. Klik &quot;Tambah Template&quot; atau &quot;Seed Bawaan&quot;.
                       </td>
                     </tr>
                   )}

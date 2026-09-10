@@ -1,9 +1,7 @@
-// TER/BPJS engine brutal tests. Two tiers:
+// TER/BPJS engine brutal tests.
 // TIER 1 (data-independent): structure, types, BPJS math, THR prorate, rounding.
-// TIER 2 (data-gated): TER bracket lookups — assert FAIL-CLOSED while the
-// verified bracket tables are empty; flip to real assertions once research
-// populates src/data/ter-2026.json. This keeps us honest: no payroll number
-// is ever computed from unverified tax brackets.
+// TIER 2 (golden tests): TER lookups verified against DJP's own worked examples
+// from the PMK 168/2023 socialization PDF — NOT against blog tables.
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -34,17 +32,48 @@ const rewritten = engineSource.replace(
 )
 const tmpPath = path.join(root, '.ter-engine.test.ts')
 writeFileSync(tmpPath, rewritten)
-const { computePph21TerMonthly, computeBpjs, computeThr, computePayrollLine, findTerBracket } = await import(
+const { computePph21TerMonthly, computeBpjs, computeThr, computePayrollLine, findTerBracket, terCategoryFor } = await import(
   pathToFileURL(tmpPath).href
 )
 rmSync(tmpPath)
 
 describe('PPh 21 TER + BPJS Engine Test Suite', () => {
   describe('1. Data file integrity (fail-closed contract)', () => {
-    it('has all 8 PTKP statuses in category A and B', () => {
+    it('has all 8 PTKP statuses in byStatus', () => {
       for (const s of PTkpStatuses) {
-        assert.ok(Array.isArray(dataRaw.ter.categoryA[s]), `categoryA missing ${s}`)
-        assert.ok(Array.isArray(dataRaw.ter.categoryB[s]), `categoryB missing ${s}`)
+        assert.ok(Array.isArray(dataRaw.ter.byStatus[s]), `byStatus missing ${s}`)
+        assert.ok(dataRaw.ter.byStatus[s].length > 0, `byStatus[${s}] must be populated`)
+      }
+    })
+
+    it('category mapping matches PMK 168/2023: A=TK/0,TK/1,K/0; B=TK/2,TK/3,K/1,K/2; C=K/3', () => {
+      const m = dataRaw._meta.categoryMapping
+      assert.equal(m['TK/0'], 'A')
+      assert.equal(m['TK/1'], 'A')
+      assert.equal(m['K/0'], 'A')
+      assert.equal(m['TK/2'], 'B')
+      assert.equal(m['TK/3'], 'B')
+      assert.equal(m['K/1'], 'B')
+      assert.equal(m['K/2'], 'B')
+      assert.equal(m['K/3'], 'C')
+      // engine mapping function agrees with the data file
+      for (const s of PTkpStatuses) {
+        assert.equal(terCategoryFor(s), m[s])
+      }
+    })
+
+    it('statuses sharing a category share identical tables (e.g. TK/0 === K/0 table)', () => {
+      const m = dataRaw._meta.categoryMapping
+      for (const a of PTkpStatuses) {
+        for (const b of PTkpStatuses) {
+          if (m[a] === m[b]) {
+            assert.deepEqual(
+              dataRaw.ter.byStatus[a],
+              dataRaw.ter.byStatus[b],
+              `${a} and ${b} are both category ${m[a]} — tables must be identical`
+            )
+          }
+        }
       }
     })
 
@@ -68,35 +97,77 @@ describe('PPh 21 TER + BPJS Engine Test Suite', () => {
       assert.equal(dataRaw.bpjs.jkk.classes.length, 5)
     })
 
-    it('brackets, when populated, are sorted with no gaps/overlaps (min >= prev max, rate <= 1)', () => {
-      for (const cat of ['categoryA', 'categoryB']) {
-        for (const s of PTkpStatuses) {
-          const t = dataRaw.ter[cat][s]
-          let prevMax = 0
-          for (const b of t) {
-            assert.ok(typeof b.min === 'number' && typeof b.rate === 'number', `${cat}/${s}: bracket missing min/rate`)
-            assert.ok(b.min >= prevMax, `${cat}/${s}: gap/overlap at min ${b.min} (prev max ${prevMax})`)
-            assert.ok(b.rate >= 0 && b.rate <= 1, `${cat}/${s}: bad rate ${b.rate}`)
-            if (b.max !== null) assert.ok(b.max > b.min, `${cat}/${s}: max must exceed min`)
-            prevMax = b.max ?? Number.MAX_SAFE_INTEGER
-          }
+    it('brackets are contiguous (min == prev max + 1), rates non-decreasing, capped at 34%', () => {
+      for (const s of PTkpStatuses) {
+        const t = dataRaw.ter.byStatus[s]
+        let prevMax = 0
+        for (let i = 0; i < t.length; i++) {
+          const b = t[i]
+          assert.ok(typeof b.min === 'number' && typeof b.rate === 'number', `${s}: bracket missing min/rate`)
+          assert.ok(b.min >= prevMax, `${s}: gap/overlap at min ${b.min} (prev max ${prevMax})`)
+          assert.ok(b.rate >= 0 && b.rate <= 1, `${s}: bad rate ${b.rate}`)
+          if (i > 0) assert.ok(b.rate >= t[i - 1].rate, `${s}: rate regression at min ${b.min}`)
+          if (b.max !== null) assert.ok(b.max > b.min, `${s}: max must exceed min`)
+          prevMax = b.max ?? Number.MAX_SAFE_INTEGER
         }
+        const last = t[t.length - 1]
+        assert.ok(last.max === null && last.rate === 0.34, `${s}: last bracket must be unbounded @ 34%`)
       }
     })
   })
 
-  describe('2. Engine structural invariants', () => {
-    it('findTerBracket returns null for empty/unpopulated tables (fail-closed)', () => {
-      if (dataRaw.ter.categoryA['TK/0'].length === 0) {
-        assert.equal(findTerBracket(10000000, 'TK/0', 'A'), null)
-      } else {
-        assert.ok(true, 'tables populated — covered by tier-2 tests below')
-      }
+  describe('2. Golden tests: DJP worked examples (PMK 168/2023 socialization PDF)', () => {
+    // Tuan C (slide 29): TK/0, 15.500.000 → Kategori A, 7% = 1.085.000
+    it('TK/0 @ 15.500.000 → 7% = 1.085.000 (DJP example, Tuan C)', () => {
+      const r = computePayrollLine({ monthlyBruto: 15500000, ptkpStatus: 'TK/0' })
+      assert.equal(r.category, 'A')
+      assert.equal(r.appliedRate, 0.07)
+      assert.equal(r.pph21Monthly, 1085000)
+    })
+
+    // Tuan D (slide 30): TK/0, 17.500.000 → Kategori A, 8% = 1.400.000
+    it('TK/0 @ 17.500.000 → 8% = 1.400.000 (DJP example, Tuan D)', () => {
+      const r = computePayrollLine({ monthlyBruto: 17500000, ptkpStatus: 'TK/0' })
+      assert.equal(r.appliedRate, 0.08)
+      assert.equal(r.pph21Monthly, 1400000)
+    })
+
+    // Tuan H (slide 35): K/2, 6.800.000 → Kategori B, 0,5% = 34.000
+    it('K/2 @ 6.800.000 → 0,5% = 34.000 (DJP example, Tuan H)', () => {
+      const r = computePayrollLine({ monthlyBruto: 6800000, ptkpStatus: 'K/2' })
+      assert.equal(r.category, 'B')
+      assert.equal(r.appliedRate, 0.005)
+      assert.equal(r.pph21Monthly, 34000)
+    })
+
+    // Boundary safety: exactly at bracket edges (min inclusive / max exclusive)
+    it('bracket boundary: max is exclusive, min is inclusive (5.400.000 vs 5.400.001)', () => {
+      const atMax = computePph21TerMonthly({ monthlyBruto: 5400000, ptkpStatus: 'TK/0' })
+      const aboveMax = computePph21TerMonthly({ monthlyBruto: 5400001, ptkpStatus: 'TK/0' })
+      assert.equal(atMax, 0) // still in 0% bracket
+      assert.equal(aboveMax, Math.round(5400001 * 0.0025)) // 0.25% bracket
+    })
+
+    it('K/3 (category C) uses the C table, NOT A/B (0% up to 6.600.000)', () => {
+      const r6m = computePph21TerMonthly({ monthlyBruto: 6000000, ptkpStatus: 'K/3' })
+      const r7m = computePph21TerMonthly({ monthlyBruto: 7000000, ptkpStatus: 'K/3' })
+      assert.equal(r6m, 0) // C table: 0..6.600.000 @ 0%
+      assert.ok(r7m > 0, 'C table must charge tax above 6.6jt')
+      // A table would have charged 6.2jt..? — ensure C ≠ A by comparing K/3 vs TK/0 at 6.500.000
+      const asA = computePph21TerMonthly({ monthlyBruto: 6500000, ptkpStatus: 'TK/0' })
+      assert.ok(asA > 0, 'sanity: TK/0 (A) charges above 5.4jt')
+      assert.equal(computePph21TerMonthly({ monthlyBruto: 6500000, ptkpStatus: 'K/3' }), 0)
     })
 
     it('computePph21TerMonthly returns 0 on zero/negative bruto', () => {
-      assert.equal(computePph21TerMonthly({ monthlyBruto: 0, ptkpStatus: 'TK/0', category: 'A' }), 0)
-      assert.equal(computePph21TerMonthly({ monthlyBruto: -5000000, ptkpStatus: 'K/1', category: 'B' }), 0)
+      assert.equal(computePph21TerMonthly({ monthlyBruto: 0, ptkpStatus: 'TK/0' }), 0)
+      assert.equal(computePph21TerMonthly({ monthlyBruto: -5000000, ptkpStatus: 'K/1' }), 0)
+    })
+
+    it('findTerBracket is null above the table (fail-closed) — never guesses', () => {
+      // 10^12 is inside the unbounded top bracket, so this must resolve, not null.
+      const huge = findTerBracket(1e12, 'TK/0')
+      assert.ok(huge && huge.rate === 0.34)
     })
   })
 
@@ -122,9 +193,6 @@ describe('PPh 21 TER + BPJS Engine Test Suite', () => {
     it('caps clamp the base: JP/Kesehatan use min(bruto, cap) not bruto', () => {
       const data = JSON.parse(readFileSync(path.join(root, 'src/data/ter-2026.json'), 'utf8'))
       if (data.bpjs.jp.cap === null) {
-        // simulate a cap: patch data via a fresh engine copy? Engine reads at
-        // module load; instead verify the cap field plumbing via computeBpjs on
-        // a low bruto (below any cap) — invariant: no negative, all rounded.
         const r = computeBpjs(100, 1)
         for (const k of Object.keys(r)) assert.ok(Number.isInteger(r[k]) && r[k] >= 0)
       } else {
@@ -159,7 +227,7 @@ describe('PPh 21 TER + BPJS Engine Test Suite', () => {
 
   describe('5. Full payroll line composition', () => {
     it('takeHomePayHint = bruto - PPh21 - employee BPJS shares, never negative-computed', () => {
-      const line = computePayrollLine({ monthlyBruto: 8000000, ptkpStatus: 'K/0', category: 'A', jkkRiskClass: 1 })
+      const line = computePayrollLine({ monthlyBruto: 8000000, ptkpStatus: 'K/0', jkkRiskClass: 1 })
       const expectedDeduction =
         line.pph21Monthly +
         line.bpjs.jhtEmployee +

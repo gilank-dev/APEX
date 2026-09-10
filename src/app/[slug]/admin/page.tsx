@@ -6,10 +6,13 @@ import {
   updateModulesAction,
   createDummyAccountAction,
   resetDummyPasswordAction,
+  setEmployeeActiveAction,
   regenerateInviteCodeAction,
   importEmployeesAction,
 } from '@/lib/admin-actions'
 import { parseCsv, rowsToEmployees } from '@/lib/csv'
+import { isProModule } from '@/lib/entitlements'
+import { gooeyToast } from 'goey-toast'
 import { useAppStore } from '@/lib/store'
 import { CATEGORY_FEATURES } from '@/lib/features'
 import SkeletonLoader from '@/components/shared/SkeletonLoader'
@@ -21,6 +24,7 @@ interface UserRecord {
   full_name: string
   email: string
   is_dummy_account: boolean
+  is_active?: boolean
   roles: {
     name: string
     is_admin: boolean
@@ -42,6 +46,8 @@ export default function AdminPage() {
   const [users, setUsers] = useState<UserRecord[]>([])
   const [roles, setRoles] = useState<RoleRecord[]>([])
   const [loading, setLoading] = useState(true)
+  const [profileId, setProfileId] = useState<string | null>(null)
+  const [isProCompany, setIsProCompany] = useState(false)
 
   // Module state
   const [modules, setModules] = useState<string[]>([])
@@ -120,10 +126,6 @@ export default function AdminPage() {
     })
   }
 
-  useEffect(() => {
-    fetchAdminData()
-  }, [])
-
   const fetchAdminData = async () => {
     setLoading(true)
     try {
@@ -140,6 +142,12 @@ export default function AdminPage() {
         const comp = uProfile.companies as any
         setCompany(comp)
         setModules(comp.active_modules || [])
+        setProfileId(uProfile.id)
+        setIsProCompany(
+          comp.tier === 'pro' ||
+          comp.tier === 'enterprise' ||
+          (comp.trial_ends_at ? new Date(comp.trial_ends_at) > new Date() : false)
+        )
 
         // Fetch users profiles
         const { data: usersList } = await supabase
@@ -165,6 +173,13 @@ export default function AdminPage() {
     }
   }
 
+  useEffect(() => {
+    // Deferred so the synchronous setLoading(true) inside the fetcher does
+    // not fire as a synchronous setState within this effect.
+    queueMicrotask(() => fetchAdminData())
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const handleToggleModule = (mod: string) => {
     setModules((prev) =>
       prev.includes(mod) ? prev.filter((m) => m !== mod) : [...prev, mod]
@@ -181,8 +196,23 @@ export default function AdminPage() {
         setError(res.error)
       } else {
         setActiveModules(modules)
-        alert('Module settings updated successfully!')
+        gooeyToast.success('Module settings updated successfully!')
         window.location.reload()
+      }
+    })
+  }
+
+  const handleToggleActive = (userId: string, currentActive: boolean) => {
+    if (!company) return
+    startTransition(async () => {
+      const res = await setEmployeeActiveAction(userId, company.slug, !currentActive)
+      if (res?.error) {
+        gooeyToast.error(res.error)
+      } else {
+        gooeyToast.success(
+          !currentActive ? 'Karyawan diaktifkan kembali.' : 'Karyawan dinonaktifkan.'
+        )
+        fetchAdminData()
       }
     })
   }
@@ -233,7 +263,7 @@ export default function AdminPage() {
       if (res?.error) {
         setError(res.error)
       } else {
-        alert('Kode undangan berhasil diperbarui!')
+        gooeyToast.success('Kode undangan berhasil diperbarui!')
         fetchAdminData()
       }
     })
@@ -276,28 +306,43 @@ export default function AdminPage() {
                     { id: 'shifts', name: 'Jadwal Shift & Roster (Pro)', description: 'Template shift bergilir dan pembagian roster mingguan' },
                     { id: 'leave', name: 'Cuti & Izin', description: 'Pengajuan cuti/izin/sakit karyawan dengan persetujuan admin' },
                     { id: 'payroll', name: 'Payroll-Lite (Pro)', description: 'Kompilasi gaji otomatis berbasis rekap kehadiran & lembur' },
+                    { id: 'kasbon', name: 'Kasbon & Cicilan (Pro)', description: 'Pengajuan kasbon karyawan dengan jadwal cicilan otomatis via potong gaji' },
                     { id: 'tasks', name: 'Manajemen Tugas (Task Board)', description: 'Papan Kanban penugasan dan monitoring operasional' },
                     { id: 'inventory', name: 'Inventaris Stok', description: 'Pencatatan aset barang dan stok barang' },
-                  ].map((mod) => (
+                  ].map((mod) => {
+                    const proLocked = !isProCompany && isProModule(mod.id)
+                    return (
                     <label
                       key={mod.id}
-                      className="flex items-start gap-3 cursor-pointer p-2.5 bg-surface hover:bg-surface-hover rounded-md border border-border transition-colors block"
+                      className={`flex items-start gap-3 p-2.5 rounded-md border transition-colors block ${
+                        proLocked
+                          ? 'bg-gray-50 border-border opacity-70 cursor-not-allowed'
+                          : 'cursor-pointer bg-surface hover:bg-surface-hover border-border'
+                      }`}
                     >
                       <input
                         type="checkbox"
                         checked={modules.includes(mod.id)}
                         onChange={() => handleToggleModule(mod.id)}
-                        disabled={isPending}
-                        className="mt-0.5 w-4 h-4 bg-transparent border-border text-primary focus:ring-0 focus:ring-offset-0 rounded-md cursor-pointer shrink-0"
+                        disabled={isPending || proLocked}
+                        className="mt-0.5 w-4 h-4 bg-transparent border-border text-primary focus:ring-0 focus:ring-offset-0 rounded-md shrink-0"
                       />
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold text-foreground font-sans tracking-wide truncate">{mod.name}</p>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className={`text-xs font-bold text-foreground font-sans tracking-wide truncate ${proLocked ? 'text-gray-400' : ''}`}>{mod.name}</p>
+                          {proLocked && (
+                            <span className="px-1.5 py-0.5 bg-amber-50 text-amber-600 border border-amber-200 rounded-md font-mono text-[9px] font-bold uppercase shrink-0">
+                              Pro
+                            </span>
+                          )}
+                        </div>
                         <p className="text-[11px] text-gray-500 leading-normal mt-0.5">
-                          {mod.description}
+                          {proLocked ? `${mod.description}. Upgrade ke Pro untuk mengaktifkan.` : mod.description}
                         </p>
                       </div>
                     </label>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
 
@@ -306,26 +351,40 @@ export default function AdminPage() {
                   Fitur Industri ({company?.category?.toUpperCase() || 'CORPORATE'})
                 </p>
                 <div className="space-y-1.5">
-                  {(CATEGORY_FEATURES[company?.category || 'corporate'] || CATEGORY_FEATURES.corporate).map((feat) => (
+                  {(CATEGORY_FEATURES[company?.category || 'corporate'] || CATEGORY_FEATURES.corporate).map((feat) => {
+                    const proLocked = !isProCompany && isProModule(feat.id)
+                    return (
                     <label
                       key={feat.id}
-                      className="flex items-start gap-3 cursor-pointer p-2.5 bg-surface hover:bg-surface-hover rounded-md border border-border transition-colors block"
+                      className={`flex items-start gap-3 p-2.5 rounded-md border transition-colors block ${
+                        proLocked
+                          ? 'bg-gray-50 border-border opacity-70 cursor-not-allowed'
+                          : 'cursor-pointer bg-surface hover:bg-surface-hover border-border'
+                      }`}
                     >
                       <input
                         type="checkbox"
                         checked={modules.includes(feat.id)}
                         onChange={() => handleToggleModule(feat.id)}
-                        disabled={isPending}
-                        className="mt-0.5 w-4 h-4 bg-transparent border-border text-primary focus:ring-0 focus:ring-offset-0 rounded-md cursor-pointer shrink-0"
+                        disabled={isPending || proLocked}
+                        className="mt-0.5 w-4 h-4 bg-transparent border-border text-primary focus:ring-0 focus:ring-offset-0 rounded-md shrink-0"
                       />
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold text-foreground font-sans tracking-wide truncate">{feat.name}</p>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className={`text-xs font-bold text-foreground font-sans tracking-wide truncate ${proLocked ? 'text-gray-400' : ''}`}>{feat.name}</p>
+                          {proLocked && (
+                            <span className="px-1.5 py-0.5 bg-amber-50 text-amber-600 border border-amber-200 rounded-md font-mono text-[9px] font-bold uppercase shrink-0">
+                              Pro
+                            </span>
+                          )}
+                        </div>
                         <p className="text-[11px] text-gray-500 leading-normal mt-0.5">
-                          {feat.description}
+                          {proLocked ? `${feat.description}. Khusus paket Pro.` : feat.description}
                         </p>
                       </div>
                     </label>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             </div>
@@ -355,7 +414,7 @@ export default function AdminPage() {
                       <button
                         onClick={() => {
                           navigator.clipboard.writeText(role.invite_code)
-                          alert('Invitation code copied!')
+                          gooeyToast.success('Invitation code copied!')
                         }}
                         className="text-xs text-primary hover:underline cursor-pointer"
                       >
@@ -393,12 +452,13 @@ export default function AdminPage() {
                     <th className="py-2.5 px-3">Username / Email</th>
                     <th className="py-2.5 px-3">Access Role</th>
                     <th className="py-2.5 px-3">Account Type</th>
+                    <th className="py-2.5 px-3">Status</th>
                     <th className="py-2.5 px-3 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="text-xs divide-y divide-gray-100">
                   {users.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={user.id} className={`hover:bg-gray-50 transition-colors ${user.is_active === false ? 'opacity-60' : ''}`}>
                       <td className="py-3 px-3 font-sans text-gray-700 font-semibold">{user.full_name}</td>
                       <td className="py-3 px-3 font-mono text-gray-600 text-xs">{user.email}</td>
                       <td className="py-3 px-3 font-mono text-gray-600 uppercase">{user.roles?.name}</td>
@@ -413,13 +473,35 @@ export default function AdminPage() {
                           {user.is_dummy_account ? 'Dummy' : 'Primary'}
                         </span>
                       </td>
-                      <td className="py-3 px-3 text-right">
+                      <td className="py-3 px-3">
+                        <span
+                          className={`px-1.5 py-0.5 rounded-md font-mono text-[11px] uppercase border ${
+                            user.is_active === false
+                              ? 'bg-red-50 text-red-600 border-red-200'
+                              : 'bg-green-50 text-green-600 border-green-200'
+                          }`}
+                        >
+                          {user.is_active === false ? 'Nonaktif' : 'Aktif'}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 text-right space-x-3">
                         {user.is_dummy_account && (
                           <button
                             onClick={() => handleResetPassword(user.auth_id!)}
                             className="text-xs text-primary hover:underline font-mono uppercase cursor-pointer"
                           >
                             [Reset Password]
+                          </button>
+                        )}
+                        {!user.roles?.is_admin && user.id !== profileId && (
+                          <button
+                            onClick={() => handleToggleActive(user.id, user.is_active !== false)}
+                            disabled={isPending}
+                            className={`text-xs hover:underline font-mono uppercase cursor-pointer ${
+                              user.is_active === false ? 'text-green-600' : 'text-red-500'
+                            }`}
+                          >
+                            {user.is_active === false ? '[Aktifkan]' : '[Nonaktifkan]'}
                           </button>
                         )}
                       </td>

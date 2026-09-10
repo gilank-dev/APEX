@@ -128,7 +128,7 @@ export function computeMonthlyAttendanceRecap(
             assignment.shift_templates.overnight ||
             assignment.shift_templates.end_time < assignment.shift_templates.start_time
 
-          let shiftEnd = new Date(
+          const shiftEnd = new Date(
             clockIn.getFullYear(),
             clockIn.getMonth(),
             clockIn.getDate(),

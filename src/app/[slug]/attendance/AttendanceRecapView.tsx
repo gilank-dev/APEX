@@ -49,11 +49,6 @@ export default function AttendanceRecapView({
   const [loading, setLoading] = useState<boolean>(true)
   const [searchQuery, setSearchQuery] = useState<string>('')
 
-  // Fetch logs and shift assignments for the selected month
-  useEffect(() => {
-    fetchMonthData()
-  }, [selectedMonth, companyId])
-
   const fetchMonthData = async () => {
     setLoading(true)
     try {
@@ -92,6 +87,14 @@ export default function AttendanceRecapView({
       setLoading(false)
     }
   }
+
+  // Fetch logs and shift assignments for the selected month
+  useEffect(() => {
+    // Deferred so the synchronous setLoading(true) inside the fetcher does
+    // not fire as a synchronous setState within this effect.
+    queueMicrotask(() => fetchMonthData())
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedMonth, companyId])
 
   // Compute recap
   const recapData: EmployeeRecap[] = useMemo(() => {

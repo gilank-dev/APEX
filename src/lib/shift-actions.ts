@@ -2,7 +2,7 @@
 
 import { createAdminClient, createClient } from './supabase/server'
 import { revalidatePath } from 'next/cache'
-import { getCallerProfile, requireManager } from '@/lib/authz'
+import { getCallerProfile, requireManager, requireModuleAccess } from '@/lib/authz'
 
 export interface ShiftTemplateInput {
   name: string
@@ -23,7 +23,7 @@ function isOvernightShift(startTime: string, endTime: string): boolean {
 
 // Seed default shift templates: Pagi 07:00-15:00, Siang 15:00-23:00, Malam 23:00-07:00
 export async function seedDefaultShiftTemplatesAction(companyId: string, slug: string) {
-  const authz = await requireManager(companyId)
+  const authz = await requireModuleAccess(companyId, 'shifts')
   if (!authz.ok) return { error: authz.error }
 
   const adminClient = createAdminClient()
@@ -84,7 +84,7 @@ export async function createShiftTemplateAction(
   slug: string,
   data: ShiftTemplateInput
 ) {
-  const authz = await requireManager(companyId)
+  const authz = await requireModuleAccess(companyId, 'shifts')
   if (!authz.ok) return { error: authz.error }
 
   if (!data.name || !data.start_time || !data.end_time) {
@@ -120,7 +120,7 @@ export async function updateShiftTemplateAction(
   slug: string,
   data: ShiftTemplateInput
 ) {
-  const authz = await requireManager(companyId)
+  const authz = await requireModuleAccess(companyId, 'shifts')
   if (!authz.ok) return { error: authz.error }
 
   if (!data.name || !data.start_time || !data.end_time) {
@@ -154,7 +154,7 @@ export async function deleteShiftTemplateAction(
   companyId: string,
   slug: string
 ) {
-  const authz = await requireManager(companyId)
+  const authz = await requireModuleAccess(companyId, 'shifts')
   if (!authz.ok) return { error: authz.error }
 
   const adminClient = createAdminClient()
@@ -179,7 +179,7 @@ export async function saveWeeklyRosterAction(
   slug: string,
   assignments: ShiftAssignmentInput[]
 ) {
-  const authz = await requireManager(companyId)
+  const authz = await requireModuleAccess(companyId, 'shifts')
   if (!authz.ok) return { error: authz.error }
 
   if (!assignments || assignments.length === 0) {
@@ -257,6 +257,10 @@ export async function createSwapRequestAction(
   if (!profile || profile.company_id !== companyId) {
     return { error: 'Akses ditolak.' }
   }
+  // Shift swap belongs to the Shifts module — block when the module is off
+  if (!profile.active_modules.includes('shifts')) {
+    return { error: 'Modul Jadwal Shift tidak aktif pada paket Anda.' }
+  }
 
   if (targetUserId === profile.user_id) {
     return { error: 'Tidak dapat menukar shift dengan diri sendiri.' }
@@ -326,6 +330,10 @@ export async function decideSwapRequestAction(
   const profile = await getCallerProfile()
   if (!profile || profile.company_id !== companyId) {
     return { error: 'Akses ditolak.' }
+  }
+  // Shift swap belongs to the Shifts module — block when the module is off
+  if (!profile.active_modules.includes('shifts')) {
+    return { error: 'Modul Jadwal Shift tidak aktif pada paket Anda.' }
   }
 
   const isManager = profile.is_admin || ['Admin', 'Manager'].includes(profile.role_name)
@@ -461,6 +469,10 @@ export async function cancelSwapRequestAction(
   const profile = await getCallerProfile()
   if (!profile || profile.company_id !== companyId) {
     return { error: 'Akses ditolak.' }
+  }
+  // Shift swap belongs to the Shifts module — block when the module is off
+  if (!profile.active_modules.includes('shifts')) {
+    return { error: 'Modul Jadwal Shift tidak aktif pada paket Anda.' }
   }
 
   const client = await createClient()

@@ -2,7 +2,7 @@
 
 import { createClient } from './supabase/server'
 import { revalidatePath } from 'next/cache'
-import { getCallerProfile, requireManager } from '@/lib/authz'
+import { getCallerProfile, requireManager, requireModuleAccess } from '@/lib/authz'
 
 export interface CreateLeaveRequestInput {
   leave_type: string
@@ -99,7 +99,7 @@ export async function decideLeaveRequestAction(
   requestId: string,
   decision: 'approved' | 'rejected'
 ) {
-  const authz = await requireManager(companyId)
+  const authz = await requireModuleAccess(companyId, 'leave')
   if (!authz.ok) return { error: authz.error }
 
   if (!['approved', 'rejected'].includes(decision)) {

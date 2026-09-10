@@ -43,6 +43,11 @@ export default function SidebarLinks({ slug, activeModules, isAdminOrManager, ca
       visible: activeModules.includes('payroll')
     },
     {
+      href: `/${slug}/kasbon`,
+      label: 'Kasbon',
+      visible: activeModules.includes('kasbon')
+    },
+    {
       href: `/${slug}/tasks`,
       label: 'Task Board',
       visible: activeModules.includes('tasks')

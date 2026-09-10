@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { resolveEntitledModules } from '@/lib/entitlements'
 import OfflineSyncProvider from '@/components/shared/OfflineSyncProvider'
 import Link from 'next/link'
 import SidebarLinks from '@/components/shared/SidebarLinks'
@@ -37,11 +38,19 @@ export default async function TenantLayout({
   const company = profile.companies as any
   const role = profile.roles as any
 
+  // Deactivated employees are signed out immediately at the layout gate
+  if (profile.is_active === false) {
+    await supabase.auth.signOut()
+    redirect('/login?deactivated=1')
+  }
+
   if (company.slug !== slug) {
     redirect(`/${company.slug}/dashboard`)
   }
 
-  const activeModules = company.active_modules || ['attendance', 'tasks']
+  // Entitlement-filtered modules: a Free company never sees Pro module links,
+  // even if active_modules was somehow set in the DB.
+  const activeModules = resolveEntitledModules(company)
   const isAdminOrManager = role.is_admin || role.name === 'Manager'
 
   return (
@@ -62,7 +71,7 @@ export default async function TenantLayout({
             <div className="px-3 py-2">
               <p className="text-sm font-bold text-gray-900 truncate">{profile.full_name}</p>
               <p className="text-xs font-mono text-gray-400 truncate uppercase mt-0.5">
-                {role.name} // {company.name}
+                {role.name}{' // '}{company.name}
               </p>
             </div>
             <form action="/api/auth/logout" method="POST">
@@ -93,7 +102,7 @@ export default async function TenantLayout({
           <header className="hidden md:flex justify-between items-center h-14 px-6 border-b border-border bg-surface/80 backdrop-blur-md">
             <div className="flex items-center gap-4">
               <h2 className="text-sm font-mono uppercase font-semibold text-gray-900 tracking-wider">
-                {company.name} // {slug}
+                {company.name}{' // '}{slug}
               </h2>
             </div>
             <div className="flex items-center gap-4 text-xs font-mono">
