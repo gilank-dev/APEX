@@ -33,7 +33,7 @@ Done tasks live here. The newest entry is the current source of truth.
 - Anon: roles enumeration []; cron/webhook/bootstrap fail-closed.
 - Gates: wrong-slug session 307 to own dashboard; no cookie → /login; super-admin page 307 for employee session.
 
-**Demo data**: tenant `reina-e2e` (module leave enabled), Admin qa-e2e@lankdev.my.id / QaProbe12345x.
+**Demo data**: tenant `reina-e2e` (module leave enabled), Admin qa-e2e@lankdev.my.id / [REDACTED-see-1password].
 
 **Parked (product decisions, not bugs)**: THR+lembur (P1, Q1 2027), kasbon (P2, 5 customers), UI polish (after pilot feedback).
 

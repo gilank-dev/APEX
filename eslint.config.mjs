@@ -16,6 +16,8 @@ const eslintConfig = defineConfig([
     "research/**",
     "tmp/**",
     "supabase/migrations.quarantine/**",
+    // Supabase CLI working dir (edge-runtime build bundles, minified):
+    "supabase/.temp/**",
   ]),
   {
     rules: {

@@ -11,21 +11,19 @@
 import assert from 'node:assert/strict'
 
 const API = 'http://127.0.0.1:54321'
-const ANON = process.env.SUPABASE_ANON_KEY || (await loadAnonKey())
-const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY || (await loadServiceKey())
-
-async function loadAnonKey() {
-  const { execSync } = await import('node:child_process')
-  return execSync('npx supabase status -o json', { cwd: process.cwd() })
-    .toString()
-    .match(/"ANON_KEY":"([^"]+)"/)?.[1]
+// Local dev keys are HS256 JWTs signed with the local JWT secret (standard
+// Supabase dev setup). Sign them ourselves since CLI output redacts keys.
+const { createHmac } = await import('node:crypto')
+const JWT_SECRET = 'super-secret-jwt-token-with-at-least-32-characters-long'
+function signKey(role) {
+  const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url')
+  const h = b64({ alg: 'HS256', typ: 'JWT' })
+  const p = b64({ role, iss: 'supabase', iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + 3600 })
+  const s = createHmac('sha256', JWT_SECRET).update(h + '.' + p).digest('base64url')
+  return h + '.' + p + '.' + s
 }
-async function loadServiceKey() {
-  const { execSync } = await import('node:child_process')
-  return execSync('npx supabase status -o json', { cwd: process.cwd() })
-    .toString()
-    .match(/"SERVICE_ROLE_KEY":"([^"]+)"/)?.[1]
-}
+const ANON = process.env.SUPABASE_ANON_KEY || signKey('anon')
+const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY || signKey('service_role')
 
 function rest(path, { method = 'GET', key = ANON, token, body } = {}) {
   const headers = {
@@ -55,8 +53,9 @@ const mk = async (name) => {
     key: SERVICE,
     body: { name, slug: `rlsaudit-${name}-${suffix}`, tier: 'free', category: 'corporate', active_modules: ['attendance', 'tasks'] },
   })
-  assert(r.ok, 'seed company failed ' + name + ' ' + (await r.text()))
-  return (await r.json())[0]
+  const j = await r.json()
+  assert(r.ok, 'seed company failed ' + name + ' ' + JSON.stringify(j))
+  return j[0]
 }
 const cA = await mk('acme')
 const cB = await mk('globex')
@@ -68,8 +67,9 @@ const mkRole = async (companyId, name, isAdmin) => {
     key: SERVICE,
     body: { company_id: companyId, name, is_admin: isAdmin, invite_code: `${name}-${suffix}-${Math.random().toString(36).slice(2, 8)}` },
   })
-  assert(r.ok, 'seed role failed: ' + (await r.text()))
-  return (await r.json())[0]
+  const j = await r.json()
+  assert(r.ok, 'seed role failed: ' + JSON.stringify(j))
+  return j[0]
 }
 const roleAAdmin = await mkRole(cA.id, 'Admin', true)
 const roleBEmp = await mkRole(cB.id, 'Employee', false)
@@ -95,8 +95,9 @@ const mkUser = async (authId, companyId, roleId, email, fullName) => {
     key: SERVICE,
     body: { auth_id: authId, company_id: companyId, role_id: roleId, email, full_name: fullName },
   })
-  assert(r.ok, 'seed user failed: ' + (await r.text()))
-  return (await r.json())[0]
+  const j = await r.json()
+  assert(r.ok, 'seed user failed: ' + JSON.stringify(j))
+  return j[0]
 }
 const adminA = await mkUser(userA.id, cA.id, roleAAdmin.id, `admin-a-${suffix}@rlsaudit.test`, 'Admin A')
 const empB = await mkUser(userB.id, cB.id, roleBEmp.id, `emp-b-${suffix}@rlsaudit.test`, 'Employee B')
@@ -116,11 +117,14 @@ const tokA = await login(`admin-a-${suffix}@rlsaudit.test`)
 const tokB = await login(`emp-b-${suffix}@rlsaudit.test`)
 
 // Seed data to attempt leaks against
-const attA = await rest('attendance_logs', {
+const attSeed = await rest('attendance_logs', {
   method: 'POST',
   key: SERVICE,
-  body: { user_id: adminA.id, company_id: cA.id, type: 'clock_in', timestamp: new Date().toISOString() },
-}).then((r) => r.json()).then((j) => j[0])
+  body: { user_id: adminA.id, company_id: cA.id, clock_in_time: new Date().toISOString() },
+})
+const attSeedBody = await attSeed.json()
+assert(attSeed.ok, 'seed attendance failed: ' + JSON.stringify(attSeedBody))
+const attA = attSeedBody[0]
 console.log(`seeded: companyA=${cA.slug} companyB=${cB.slug} adminA empB logA=${attA.id}`)
 
 // ======== AUDIT: cross-tenant SELECT leaks ========
@@ -153,7 +157,7 @@ console.log('\n[B] Cross-tenant WRITE attempts')
   const r = await rest('attendance_logs', {
     method: 'POST',
     token: tokB,
-    body: { user_id: adminA.id, company_id: cA.id, type: 'clock_in', timestamp: new Date().toISOString() },
+    body: { user_id: adminA.id, company_id: cA.id, clock_in_time: new Date().toISOString() },
   })
   check('empB cannot insert into companyA attendance', r.status === 401 || r.status === 403, `status ${r.status}`)
 
@@ -202,11 +206,18 @@ console.log('\n[C] Tier/entitlement tamper attempts')
 
 console.log('\n[D] Deactivated employee lockout (is_active)')
 {
-  // Deactivate admin A via service role, then verify their reads now fail
+  // Deactivate admin A via service role, then verify ALL reads now return
+  // nothing. Since migration 20260910000016 the tenancy helpers return NULL
+  // for deactivated users, so every RLS policy comparison fails.
   await rest(`users?id=eq.${adminA.id}`, { method: 'PATCH', key: SERVICE, body: { is_active: false } })
   const r = await rest(`users?company_id=eq.${cA.id}`, { token: tokA })
   const rows = await r.json()
-  check('deactivated admin still RLS-scoped (rows empty or self)', Array.isArray(rows) && rows.length <= 1, `got ${rows?.length}`)
+  check('deactivated admin reads ZERO rows (hard RLS lockout)', Array.isArray(rows) && rows.length === 0, `got ${rows?.length}`)
+
+  // Deactivated user cannot read their own attendance either
+  const r2 = await rest(`attendance_logs?company_id=eq.${cA.id}`, { token: tokA })
+  const rows2 = await r2.json()
+  check('deactivated admin reads ZERO attendance rows', Array.isArray(rows2) && rows2.length === 0, `got ${rows2?.length}`)
   // restore
   await rest(`users?id=eq.${adminA.id}`, { method: 'PATCH', key: SERVICE, body: { is_active: true } })
 }

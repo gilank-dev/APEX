@@ -43,3 +43,12 @@ next-env.d.ts
 .vercel
 .hermes-check/
 supabase/.temp/
+
+# scratch / agent work dirs (not app source)
+research/package/
+tmp/
+.opencode/
+.ter-engine.test.mjs
+graphify-out/
+research/pph21-pkg/
+supabase/.branches/

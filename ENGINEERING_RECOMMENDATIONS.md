@@ -258,7 +258,7 @@ export async function loginAs(page: Page, email: string, password: string) {
 export async function loginAsEmployee(page: Page, slug: string) {
   // For automated tests, use a dedicated test tenant with known credentials
   // Set up via a seed script that runs before tests
-  await loginAs(page, 'qa-employee@lankdev.my.id', 'QaProbe12345x')
+  await loginAs(page, 'qa-employee@lankdev.my.id', '[REDACTED-see-1password]')
 }
 ```
 
