@@ -80,15 +80,18 @@ export function generateRequestCode(slug: string): string {
 
 /**
  * Computes HMAC-SHA256 hex digest for WhatsApp webhook verification
- * Payload format: `${companyId}:${tier}:${ts}`
+ * Payload format: colon-separated concatenation of all parts
+ * Examples:
+ *   hmacSignature(secret, companyId, tier, ts)
+ *   → `${companyId}:${tier}:${ts}`
+ *   hmacSignature(secret, companyId, employeeId, payslipMonth, ts)
+ *   → `${companyId}:${employeeId}:${payslipMonth}:${ts}`
  */
 export function hmacSignature(
   secret: string,
-  companyId: string,
-  tier: string,
-  ts: number | string
+  ...parts: (string | number)[]
 ): string {
-  const payload = `${companyId}:${tier}:${ts}`
+  const payload = parts.join(':')
   return crypto.createHmac('sha256', secret).update(payload).digest('hex')
 }
 
