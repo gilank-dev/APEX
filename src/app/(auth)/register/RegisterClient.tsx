@@ -219,11 +219,14 @@ export default function RegisterClient() {
             <button
               type="submit"
               disabled={isPending}
-              className="w-full py-2.5 px-4 bg-primary hover:bg-primary-hover text-white font-mono uppercase text-xs font-semibold rounded-md transition-colors focus:outline-none disabled:opacity-50 mt-4 cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98]"
+              className="w-full py-3.5 px-4 bg-primary hover:bg-primary-hover text-white font-mono uppercase text-xs font-semibold rounded-md transition-colors focus:outline-none disabled:opacity-50 mt-4 cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98]"
             >
               {isPending ? 'Menyiapkan workspace...' : 'Daftar Sekarang'}
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
+            <p className="text-center text-[11px] text-gray-400 mt-3 font-mono">
+              Gratis 14 hari, tanpa kartu kredit. Data kamu aman dan bisa diexport kapan pun.
+            </p>
           </form>
 
           <div className="mt-6 pt-6 border-t border-border text-center flex flex-col gap-2">
@@ -233,6 +236,14 @@ export default function RegisterClient() {
             <Link href="/join" className="text-xs text-gray-500 hover:text-foreground hover:underline font-mono uppercase">
               Dapat kode undangan? Gabung sebagai karyawan
             </Link>
+            <a
+              href="https://lankdev.my.id/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] text-gray-400 hover:text-gray-500 hover:underline font-mono uppercase"
+            >
+              Kebijakan Privasi
+            </a>
           </div>
         </div>
       </div>
