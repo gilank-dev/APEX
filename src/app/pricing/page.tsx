@@ -341,6 +341,16 @@ export default function PricingPage() {
               Chat WhatsApp
             </a>
           </div>
+          <p className="pt-4 text-white/60 text-[12px]">
+            Sudah punya akun?{' '}
+            <Link href="/login" className="text-white underline underline-offset-4 hover:text-white/80 font-medium">
+              Masuk di sini
+            </Link>
+            {' '}— baru kenal Apex?{' '}
+            <Link href="/" className="text-white underline underline-offset-4 hover:text-white/80 font-medium">
+              pelajari fiturnya di beranda
+            </Link>
+          </p>
         </section>
       </main>
 

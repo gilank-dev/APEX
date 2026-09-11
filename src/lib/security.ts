@@ -11,7 +11,7 @@ export interface RateLimitResult {
 }
 
 export interface RateLimiter {
-  check(key: string, now?: number): RateLimitResult
+  check(key: string, now?: number): Promise<RateLimitResult>
   reset(key: string): void
 }
 
@@ -101,7 +101,7 @@ export function createRateLimiter(options?: RateLimiterOptions): RateLimiter {
   const storage = new Map<string, number[]>()
 
   return {
-    check(key: string, explicitNow?: number): RateLimitResult {
+    async check(key: string, explicitNow?: number): Promise<RateLimitResult> {
       const now = explicitNow ?? Date.now()
       let timestamps = storage.get(key) || []
 

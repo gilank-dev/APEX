@@ -1,10 +1,11 @@
 import Link from 'next/link'
-import { ArrowLeft, Home, KeyRound, AlertTriangle } from 'lucide-react'
+import { Home, KeyRound, SearchX } from 'lucide-react'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: '404 — Node Not Found',
-  description: 'The requested enterprise operations node or route could not be located in the cluster.',
+  title: 'Halaman Tidak Ditemukan — Apex',
+  description:
+    'Halaman atau tautan yang kamu tuju tidak ditemukan. Kembali ke beranda Apex atau masuk ke workspace kamu.',
   robots: {
     index: false,
     follow: true,
@@ -17,12 +18,12 @@ export default function NotFound() {
       {/* Background ambient gradient */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-orange-500/10 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Grid Pattern overlay */}
-      <div 
+      {/* Grid pattern overlay */}
+      <div
         className="absolute inset-0 opacity-10 pointer-events-none"
         style={{
           backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.2) 1px, transparent 1px)',
-          backgroundSize: '24px 24px'
+          backgroundSize: '24px 24px',
         }}
       />
 
@@ -32,30 +33,31 @@ export default function NotFound() {
           <div className="w-8 h-8 border border-primary flex items-center justify-center rounded-[2px] font-mono text-xs font-black text-primary bg-primary/10">
             AP
           </div>
-          <span className="font-mono tracking-widest text-sm font-bold uppercase text-white">APEX NODE</span>
+          <span className="font-mono tracking-widest text-sm font-bold uppercase text-white">Apex</span>
         </div>
 
         {/* Diagnostic badge */}
-        <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-500/10 border border-red-500/20 rounded-[2px] text-red-400 font-mono text-xs uppercase tracking-widest">
-          <AlertTriangle className="w-3.5 h-3.5" />
-          <span>STATUS // 404_ROUTE_UNRESOLVED</span>
+        <div className="inline-flex items-center gap-2 px-3 py-1 bg-orange-500/10 border border-orange-500/20 rounded-[2px] text-orange-400 font-mono text-xs uppercase tracking-widest">
+          <SearchX className="w-3.5 h-3.5" />
+          <span>404 — Halaman Tidak Ditemukan</span>
         </div>
 
-        {/* Primary Page Heading */}
-        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight uppercase font-mono">
-          404 - Node Not Found
+        {/* Primary page heading */}
+        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
+          Halaman Ini Tidak Ada
         </h1>
 
         <p className="text-gray-400 text-sm leading-relaxed max-w-md mx-auto">
-          The requested route, workspace cluster, or asset parameter does not exist or has been relocated to another shard.
+          Tautan yang kamu buka mungkin salah ketik, sudah dipindahkan, atau workspace-nya sudah
+          tidak aktif. Coba kembali ke beranda atau masuk ke workspace kamu.
         </p>
 
-        {/* Telemetry Console Frame */}
+        {/* Hint box */}
         <div className="text-left bg-black/40 border border-white/10 rounded-[2px] p-4 font-mono text-[11px] text-gray-400 space-y-1.5">
-          <div className="text-gray-500">{'// TELEMETRY DIAGNOSTIC'}</div>
-          <div className="text-orange-400">CLUSTER: APEX_MAIN_GATEWAY_V1</div>
-          <div className="text-gray-400">RESOLVER: SUBGRAPH_LOOKUP_FAILED</div>
-          <div className="text-gray-500">RETRY_ACTION: RETURN_TO_CANONICAL_INDEX</div>
+          <div className="text-gray-500">{'// PETUNJUK'}</div>
+          <div className="text-gray-300">Pastikan tautan undangan atau alamat workspace benar.</div>
+          <div className="text-gray-300">Halaman workspace selalu berbentuk: apex.lankdev.my.id/[nama-perusahaan]/...</div>
+          <div className="text-gray-500">Butuh bantuan? Hubungi support via WhatsApp di halaman beranda.</div>
         </div>
 
         {/* Navigation CTAs */}
@@ -65,19 +67,19 @@ export default function NotFound() {
             className="w-full sm:w-auto px-5 py-3 bg-primary hover:bg-primary-hover text-white font-mono text-xs font-bold uppercase rounded-[2px] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg active:scale-[0.98]"
           >
             <Home className="w-4 h-4" />
-            Return to Base
+            Kembali ke Beranda
           </Link>
           <Link
             href="/login"
             className="w-full sm:w-auto px-5 py-3 bg-white/5 hover:bg-white/10 text-gray-200 border border-white/10 font-mono text-xs font-bold uppercase rounded-[2px] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
           >
             <KeyRound className="w-4 h-4" />
-            Portal Sign In
+            Masuk Workspace
           </Link>
         </div>
 
         <div className="pt-6 border-t border-white/10 text-[10px] font-mono text-gray-500 uppercase tracking-wider">
-          © 2026 APEX BY LANKDEV // SYSTEM DIAGNOSTIC OK
+          © 2026 Apex by Lankdev
         </div>
       </div>
     </div>

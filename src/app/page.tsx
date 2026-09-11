@@ -103,6 +103,13 @@ export default function Home() {
               </a>
             </div>
 
+            <div className="pt-3 text-[12px] text-gray-500">
+              Gratis selamanya untuk 15 anggota —{' '}
+              <Link href="/pricing" className="text-primary underline-offset-4 hover:underline font-medium">
+                lihat semua paket &amp; harga
+              </Link>
+            </div>
+
             <div className="pt-6 border-t border-border flex flex-wrap gap-6 items-center w-full max-w-full">
               <div className="text-[10px] text-gray-400 font-mono uppercase tracking-wider break-all">
                 ✓ Data karyawan terisolasi per perusahaan (RLS)
@@ -242,7 +249,7 @@ export default function Home() {
               Mulai Coba Gratis
             </Link>
             <a
-              href="https://wa.me/6282124153732?text=Halo%20Apex%2C%20saya%20ingin%20jadwalkan%20layanan%20demo%20sistem%20Enterprise."
+              href="https://wa.me/6282124153732?text=Halo%2C%20saya%20tertarik%20demo%20Apex.%20Bisa%20lihat%20tampilannya%3F"
               target="_blank"
               rel="noopener noreferrer"
               className="px-6 py-3.5 bg-white/10 text-white border border-white/20 font-mono text-[11px] font-bold uppercase rounded-[2px] transition-all hover:bg-white/20 text-center cursor-pointer active:scale-[0.98]"

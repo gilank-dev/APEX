@@ -56,7 +56,7 @@ export async function registerTenantAction(prevState: any, formData: FormData) {
   } catch {
     ip = 'unknown'
   }
-  if (!registerRateLimiter.check(`reg:${ip}`).allowed) {
+      if (!(await registerRateLimiter.check(`reg:${ip}`)).allowed) {
     return { error: 'Terlalu banyak percobaan registrasi. Coba lagi dalam satu jam.' }
   }
 
@@ -212,8 +212,10 @@ export async function loginAdminAction(prevState: any, formData: FormData) {
   } catch {
     ip = 'unknown'
   }
-  const ipCheck = loginRateLimiter.check(`login-ip:${ip}`)
-  const emailCheck = loginRateLimiter.check(`login-email:${email.toLowerCase()}`)
+  const [ipCheck, emailCheck] = await Promise.all([
+    loginRateLimiter.check(`login-ip:${ip}`),
+    loginRateLimiter.check(`login-email:${email.toLowerCase()}`),
+  ])
   if (!ipCheck.allowed || !emailCheck.allowed) {
     return { error: 'Terlalu banyak percobaan login. Tunggu beberapa menit lalu coba lagi.' }
   }
@@ -252,8 +254,10 @@ export async function joinEmployeeAction(prevState: any, formData: FormData) {
   }
 
   const normalizedCode = inviteCode.trim().toUpperCase()
-  const ipCheck = joinRateLimiter.check(`ip:${ip}`)
-  const codeCheck = joinRateLimiter.check(`code:${normalizedCode}`)
+  const [ipCheck, codeCheck] = await Promise.all([
+    joinRateLimiter.check(`ip:${ip}`),
+    joinRateLimiter.check(`code:${normalizedCode}`),
+  ])
 
   if (!ipCheck.allowed || !codeCheck.allowed) {
     return { error: 'Kode undangan tidak valid atau sudah kedaluwarsa. Cek lagi sama HR/bos kamu.' }

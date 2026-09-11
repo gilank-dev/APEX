@@ -1,20 +1,29 @@
-# APEX — Enterprise Operations Control Node
-> High-performance B2B Multi-Tenant SaaS platform designed for telemetry control, offline-first biometric selfie attendance verification, Kanban tasks, and low-stock SKU inventory management.
+# Apex — Absensi, Payroll & Inventaris untuk Bisnis Indonesia
 
-## Canonical Web Resources
-- [Apex Home](https://apex.lankdev.my.id/): Official platform capabilities, features, and pricing.
-- [Workspace Sign In](https://apex.lankdev.my.id/login): Tenant access portal for administrators, managers, and employees.
-- [Workspace Registration](https://apex.lankdev.my.id/register): Instant enterprise onboarding and workspace provisioning.
-- [Join Workspace](https://apex.lankdev.my.id/join): Fast invite-code employee onboarding.
+> Platform HRIS untuk bisnis berbasis shift: absensi selfie dengan verifikasi GPS, rekap gaji otomatis dari kehadiran, pengajuan cuti dan tukar shift dengan approval, serta pencatatan stok. Dibangun oleh Gilank Putra Ramadhan (Lankdev).
 
-## Architecture & System Capabilities
-- **Multi-Tenant Isolation**: Dedicated database tenant boundaries with Row Level Security (RLS) across all entities.
-- **Biometric Attendance Verification**: On-the-fly client-compressed selfie capture with geolocation coordinates and offline queue sync.
-- **Kanban Task Workflow**: Real-time task board with role-gated mutations.
-- **Inventory Telemetry**: Continuous SKU status monitoring with critical low-stock triggers (<= 10 units).
-- **Security & Integrity**: Fail-closed API gates, HMAC-SHA256 authenticated webhooks, in-memory rate limiting, and encrypted client storage.
+## Halaman Utama
+- [Beranda Apex](https://apex.lankdev.my.id/): Penjelasan fitur, cara kerja, dan tautan pendaftaran.
+- [Harga & Paket](https://apex.lankdev.my.id/pricing): Paket Free selamanya, Pro Rp 249.000/bulan, Enterprise custom.
+- [Masuk Workspace](https://apex.lankdev.my.id/login): Halaman login untuk admin, manager, dan karyawan.
+- [Daftar Workspace Baru](https://apex.lankdev.my.id/register): Membuat workspace perusahaan baru.
+- [Gabung via Kode Undangan](https://apex.lankdev.my.id/join): Karyawan masuk ke workspace perusahaan dengan kode undangan.
 
-## Contact & Governance
-- **Developer**: Lankdev Multi Teknologi
+## Fitur Utama
+- **Absensi Selfie + GPS**: Karyawan absen dengan foto selfie kamera depan, tercatat dengan lokasi GPS. Data absensi tidak bisa diubah setelah tersimpan.
+- **Payroll Otomatis**: Rekap gaji dihitung otomatis dari kehadiran bulanan, termasuk komponen tunjangan dan potongan (kasbon, THR, PPh 21 TER).
+- **Cuti & Tukar Shift**: Pengajuan cuti/izin/sakit dan pertukaran shift dengan persetujuan admin, lengkap dengan riwayat.
+- **Inventaris Stok**: Pencatatan SKU barang dengan peringatan stok menipis.
+- **Papan Tugas**: Pengelolaan tugas tim dengan status berjalan/selesai.
+- **Multi-Workspace Aman**: Setiap perusahaan terisolasi dengan Row Level Security (RLS) di level database — data antar perusahaan tidak bisa saling terlihat.
+
+## Teknologi
+- Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4
+- Supabase PostgreSQL dengan Row Level Security di semua tabel
+- Autentikasi Supabase Auth, webhook WhatsApp dengan HMAC-SHA256
+
+## Kontak & Kepemilikan
+- **Pengembang**: Gilank Putra Ramadhan (Lankdev)
 - **Support**: https://wa.me/6282124153732
-- **Repository**: https://github.com/theclipperss1-create/APEX
+- **Email**: gilankdev@gmail.com
+- **Repository**: https://github.com/gilank-dev/APEX

@@ -1,26 +1,34 @@
-# APEX — Enterprise Operations Control Node (Full Documentation)
+# Apex — Dokumentasi Lengkap (untuk LLM)
 
-APEX is a B2B Multi-Tenant Operations Platform engineered with Next.js 16 (App Router), React 19, TypeScript, Supabase PostgreSQL, and Tailwind CSS v4.
+APEX adalah platform HRIS multi-tenant untuk bisnis berbasis shift di Indonesia. Dibangun dengan Next.js 16 (App Router), React 19, TypeScript, Supabase PostgreSQL, dan Tailwind CSS v4 oleh Gilank Putra Ramadhan (Lankdev).
 
-## System Index & Endpoints
-1. `/` — Primary Landing Page & Architecture Showcase
-2. `/login` — Central Authentication Gateway
-3. `/register` — Multi-Tenant Organization Provisioning
-4. `/join` — Anonymous Employee Code Onboarding
-5. `/[slug]/dashboard` — Organization Operations Control Center
-6. `/[slug]/attendance` — Geo-Locked Biometric Selfie Attendance Log
-7. `/[slug]/tasks` — Kanban Board with Status Transitions
-8. `/[slug]/inventory` — SKU Asset Ledger & Stock Warnings
-9. `/[slug]/billing` — Tier Quota Invoicing & WhatsApp Payment Handlers
-10. `/[slug]/admin` — Organization Settings, Invite Management, & Custom Sub-modules
-11. `/super-admin` — Platform Telemetry & Multi-Tenant Overseer
-12. `/api/bootstrap/super-admin` — Fail-Closed Super Admin Initialization
-13. `/api/webhooks/whatsapp` — HMAC-SHA256 Authenticated Billing Sync
-14. `/api/cron/cleanup` — Routine Pruning for Inactive Data
+## Indeks Halaman Publik
+1. `/` — Landing page: penjelasan fitur, cara kerja, keamanan, harga
+2. `/pricing` — Harga & paket: Free selamanya, Pro Rp 249.000/bulan, Enterprise custom
+3. `/login` — Masuk workspace
+4. `/register` — Daftar workspace perusahaan baru
+5. `/join` — Gabung workspace dengan kode undangan dari admin perusahaan
 
-## Technical Foundations & Invariants
-- **Database Model**: Supabase PostgreSQL with enforced Row Level Security (RLS). Cross-tenant queries are blocked at the engine layer.
-- **Client Offline Storage**: `idb-keyval` stores attendance selfies and offline tasks encrypted locally.
-- **Webhook Security**: Enforces HMAC-SHA256 signatures with 300-second timestamp freshness windows and timing-safe comparison.
-- **Brute Force Protection**: In-memory rate limiting bounds join attempts per IP and invitation code.
-- **Design Tokens**: Industrial dark palette (`#0C111D` background, `#38BDF8` sky blue accent, sharp 2px radius).
+## Halaman Aplikasi (per-workspace, butuh login)
+- `/[slug]/dashboard` — Ringkasan operasional perusahaan
+- `/[slug]/attendance` — Absensi selfie dengan GPS + rekap kehadiran
+- `/[slug]/tasks` — Papan tugas tim
+- `/[slug]/inventory` — Inventaris stok dengan peringatan stok menipis
+- `/[slug]/payroll` — Payroll otomatis dari rekap kehadiran (Pro ke atas)
+- `/[slug]/leave` — Pengajuan cuti/izin/sakit dengan approval
+- `/[slug]/shifts` — Jadwal shift & pertukaran shift (Pro ke atas)
+- `/[slug]/kasbon` — Kasbon karyawan & angsuran
+- `/[slug]/billing` — Tagihan paket & pembayaran
+- `/[slug]/admin` — Pengaturan perusahaan, anggota, & modul
+
+## Fitur Detail
+- **Absensi**: selfie kamera depan + GPS, anti-duplikat, data tidak bisa diubah (integrity hash)
+- **Payroll**: komponen gaji, tunjangan, potongan kasbon/THR, PPh 21 metode TER (PMK 168/2023), slip gaji per karyawan
+- **Cuti**: jenis cuti/izin/sakit, saldo, approval admin, riwayat lengkap
+- **Keamanan**: RLS di semua tabel, anon key tidak bisa baca data, session ter-scoped per workspace, rate limiting login/register/join, webhook HMAC-SHA256
+
+## Kontak
+- Pengembang: Gilank Putra Ramadhan (Lankdev)
+- Support: https://wa.me/6282124153732
+- Email: gilankdev@gmail.com
+- Repository: https://github.com/gilank-dev/APEX

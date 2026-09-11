@@ -33,13 +33,31 @@ export default function JsonLd() {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: SITE_CONFIG.company.name,
+    legalName: SITE_CONFIG.company.legalName,
     description: SITE_CONFIG.description,
     url: SITE_CONFIG.url,
     logo: `${SITE_CONFIG.url}/icon.png`,
     email: SITE_CONFIG.company.email,
     telephone: SITE_CONFIG.company.phone,
-    // No fake street address, postal code, or geo coordinates:
-    // SaaS produk, bukan lokasi fisik. Google validasi alamat LocalBusiness.
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: SITE_CONFIG.company.city,
+      addressRegion: SITE_CONFIG.company.region,
+      addressCountry: SITE_CONFIG.company.country,
+    },
+    contactPoint: [
+      {
+        '@type': 'ContactPoint',
+        contactType: 'customer support',
+        email: SITE_CONFIG.company.email,
+        telephone: SITE_CONFIG.company.phone,
+        url: SITE_CONFIG.company.whatsapp,
+        availableLanguage: ['id', 'en'],
+        areaServed: 'ID',
+      },
+    ],
+    // No fake street address or geo coordinates: SaaS produk, bukan lokasi
+    // fisik. Google memberi manual action untuk LocalBusiness dengan alamat palsu.
     sameAs: [SITE_CONFIG.social.github],
   }
 
