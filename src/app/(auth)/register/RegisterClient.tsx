@@ -237,12 +237,16 @@ export default function RegisterClient() {
               Dapat kode undangan? Gabung sebagai karyawan
             </Link>
             <a
-              href="https://lankdev.my.id/privacy"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/privacy"
               className="text-[10px] text-gray-400 hover:text-gray-500 hover:underline font-mono uppercase"
             >
               Kebijakan Privasi
+            </a>
+            <a
+              href="/terms"
+              className="text-[10px] text-gray-400 hover:text-gray-500 hover:underline font-mono uppercase"
+            >
+              Syarat & Ketentuan
             </a>
           </div>
         </div>
