@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Check, Shield, Sparkles, Zap, ArrowRight } from 'lucide-react'
 import LandingHeader from '@/components/landing/LandingHeader'
 import LandingFooter from '@/components/landing/LandingFooter'
+import PricingCalculator from '@/components/pricing/PricingCalculator'
 import { SITE_CONFIG } from '@/lib/site'
 
 export const metadata: Metadata = {
@@ -145,6 +146,11 @@ export default function PricingPage() {
           <p className="text-gray-500 text-sm md:text-base max-w-[55ch] mx-auto leading-relaxed">
             Semua rencana termasuk trial Pro 14 hari gratis. Tanpa kartu kredit, berhenti kapan saja.
           </p>
+        </section>
+
+        {/* Pricing Calculator */}
+        <section className="w-full max-w-4xl mx-auto">
+          <PricingCalculator />
         </section>
 
         {/* Plan Cards Grid */}
