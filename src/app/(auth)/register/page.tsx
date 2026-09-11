@@ -2,13 +2,13 @@ import type { Metadata } from 'next'
 import RegisterClient from './RegisterClient'
 
 export const metadata: Metadata = {
-  title: 'Daftar Gratis — Apex',
+  title: 'Daftar Gratis',
   description: 'Daftar workspace Apex gratis 14 hari tanpa kartu kredit. Absensi selfie, payroll otomatis, cuti, shift, dan stok dalam satu aplikasi.',
   alternates: {
     canonical: '/register',
   },
   openGraph: {
-    title: 'Daftar Gratis — Apex',
+    title: 'Daftar Gratis',
     description: 'Daftar workspace Apex gratis 14 hari tanpa kartu kredit. Absensi selfie, payroll otomatis, cuti, shift, dan stok dalam satu aplikasi.',
   },
 }
