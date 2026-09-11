@@ -1,4 +1,5 @@
 {
+  "name": "saas-all",
   "crons": [
     {
       "path": "/api/cron/cleanup",
