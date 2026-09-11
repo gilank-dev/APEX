@@ -112,12 +112,12 @@ export function createRateLimiter(options?: RateLimiterOptions): RateLimiter {
         const oldest = timestamps[0]
         const retryAfterSec = Math.max(1, Math.ceil((oldest + windowMs - now) / 1000))
         storage.set(key, timestamps)
-        return { allowed: false, retryAfterSec }
+        return Promise.resolve({ allowed: false, retryAfterSec })
       }
 
       timestamps.push(now)
       storage.set(key, timestamps)
-      return { allowed: true, retryAfterSec: 0 }
+      return Promise.resolve({ allowed: true, retryAfterSec: 0 })
     },
 
     reset(key: string): void {
