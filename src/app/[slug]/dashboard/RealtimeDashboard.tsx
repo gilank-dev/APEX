@@ -62,10 +62,11 @@ export default function RealtimeDashboard({ companyId, slug, activeModules, init
 
   useEffect(() => {
     // Realtime channel on the exact tables the charts are built from.
+    // No `private: true`: this is a postgres_changes channel, and row access is
+    // already enforced by each table's RLS policies using the caller's JWT.
+    // (private:true would require realtime.messages policies instead.)
     const channel = client
-      .channel(`dashboard-${companyId}`, {
-        config: { private: true },
-      })
+      .channel(`dashboard-${companyId}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'attendance_logs', filter: `company_id=eq.${companyId}` },
