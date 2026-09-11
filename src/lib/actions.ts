@@ -2,12 +2,12 @@
 
 import { createAdminClient, createClient } from './supabase/server'
 import { cookies, headers } from 'next/headers'
-import { createRateLimiter } from './security'
+import { createRateLimiter, createRateLimiterPersistent } from './security'
 import { effectiveTier, getMaxAllowedEmployees } from './entitlements'
 import crypto from 'node:crypto'
 
 // Best-effort in-memory rate limiter for serverless environment. Upgrade path: Upstash Redis.
-const joinRateLimiter = createRateLimiter({
+const joinRateLimiter = createRateLimiterPersistent({
   maxAttempts: 10,
   windowMs: 10 * 60 * 1000,
 })

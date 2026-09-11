@@ -1,9 +1,33 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { createRateLimiterPersistent } from '@/lib/security'
+
+// Rate limiting for sensitive API endpoints (merged from middleware.ts —
+// Next.js 16 allows ONLY proxy.ts, not both files).
+const apiRateLimiter = createRateLimiterPersistent({
+  maxAttempts: 20,
+  windowMs: 60 * 1000, // 20 requests per minute per IP for sensitive /api/* endpoints
+})
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   const pathParts = pathname.split('/').filter(Boolean)
+
+  // Apply rate limiting for sensitive API endpoints
+  if (pathname.startsWith('/api/')) {
+    const ip =
+      request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+      request.headers.get('x-real-ip') ||
+      'unknown'
+
+    const checkResult = await apiRateLimiter.check(`api:${pathname}:${ip}`)
+    if (!checkResult.allowed) {
+      return NextResponse.json(
+        { error: 'Terlalu banyak permintaan (rate limit exceeded). Silakan coba beberapa saat lagi.' },
+        { status: 429, headers: { 'Retry-After': String(checkResult.retryAfterSec) } }
+      )
+    }
+  }
 
   // Skip static assets and public landing page
   if (

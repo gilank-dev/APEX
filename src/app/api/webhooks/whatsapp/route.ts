@@ -1,7 +1,12 @@
 import crypto from 'node:crypto'
 import { createAdminClient } from '@/lib/supabase/server'
+import { createRateLimiterPersistent, hmacSignature, verifyTimestamp } from '@/lib/security'
 import { NextResponse, type NextRequest } from 'next/server'
-import { hmacSignature, verifyTimestamp } from '@/lib/security'
+
+const webhookRateLimiter = createRateLimiterPersistent({
+  maxAttempts: 30,
+  windowMs: 60 * 1000,
+})
 
 export async function POST(request: NextRequest) {
   let companyId: string | undefined
@@ -12,6 +17,15 @@ export async function POST(request: NextRequest) {
     request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
     request.headers.get('x-real-ip') ||
     'unknown'
+
+  // Rate limit webhook invocations per IP (sensitive endpoint: tier changes)
+  const { allowed: ipAllowed, retryAfterSec } = await webhookRateLimiter.check(`whatsapp:${ip}`)
+  if (!ipAllowed) {
+    return NextResponse.json(
+      { error: 'Terlalu banyak permintaan webhook. Coba lagi nanti.' },
+      { status: 429, headers: { 'Retry-After': String(retryAfterSec) } }
+    )
+  }
 
   const logAttempt = (status: 'accepted' | 'rejected', reason?: string) => {
     console.log(

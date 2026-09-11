@@ -10,13 +10,13 @@ import LandingFooter from '@/components/landing/LandingFooter'
 import { SITE_CONFIG } from '@/lib/site'
 
 export const metadata: Metadata = {
-  title: 'Apex — Absensi Selfie, Payroll Otomatis & Inventaris | Satu Aplikasi',
+  title: 'Apex — Absensi Selfie, Payroll & Inventaris',
   description: 'Absensi selfie terverifikasi, payroll otomatis, dan monitoring stok dalam satu aplikasi. Gratis 14 hari, tanpa kartu kredit.',
   alternates: {
     canonical: '/',
   },
   openGraph: {
-    title: 'Apex — Absensi Selfie, Payroll Otomatis & Inventaris | Satu Aplikasi',
+    title: 'Apex — Absensi Selfie, Payroll & Inventaris',
     description: 'Absensi selfie terverifikasi, payroll otomatis, dan monitoring stok dalam satu aplikasi. Gratis 14 hari, tanpa kartu kredit.',
     url: SITE_CONFIG.url,
   },

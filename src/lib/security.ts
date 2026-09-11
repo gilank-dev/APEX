@@ -12,10 +12,44 @@ export interface RateLimitResult {
 
 export interface RateLimiter {
   check(key: string, now?: number): Promise<RateLimitResult>
-  reset(key: string): void
+  reset(key: string): Promise<void>
 }
 
 const ALPHANUMERIC_CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+/**
+ * Minimal Upstash Redis REST client (fetch-based, zero-dependency).
+ * Implements only the commands the persistent rate limiter needs.
+ */
+function createUpstashRestClient(url: string, token: string) {
+  const request = async (command: (string | number)[]): Promise<unknown> => {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(command),
+      cache: 'no-store',
+    })
+    if (!res.ok) {
+      throw new Error(`Upstash REST error: ${res.status}`)
+    }
+    const body = (await res.json()) as { result?: unknown }
+    return body.result
+  }
+
+  return {
+    zrangebyscore: (key: string, min: number, max: string): Promise<unknown[]> =>
+      request(['ZRANGEBYSCORE', key, min, max]) as Promise<unknown[]>,
+    zremrangebyscore: (key: string, min: string, max: number): Promise<unknown> =>
+      request(['ZREMRANGEBYSCORE', key, min, max]),
+    zadd: (key: string, ...members: [number, number][]): Promise<unknown> =>
+      request(['ZADD', key, ...members.flatMap(([score, member]) => [score, member])]),
+    expire: (key: string, seconds: number): Promise<unknown> => request(['EXPIRE', key, seconds]),
+    del: (key: string): Promise<unknown> => request(['DEL', key]),
+  }
+}
 
 /**
  * Generates a standardized request code: APX-XXXX-YYYYYY
@@ -120,13 +154,104 @@ export function createRateLimiter(options?: RateLimiterOptions): RateLimiter {
       return Promise.resolve({ allowed: true, retryAfterSec: 0 })
     },
 
-    reset(key: string): void {
+    reset(key: string): Promise<void> {
       storage.delete(key)
+      return Promise.resolve()
     },
   }
 }
 
 const VALID_TIERS = new Set(['free', 'pro', 'enterprise'])
+
+/**
+ * Creates a distributed sliding-window rate limiter using Upstash Redis.
+ * Requirements: UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN env vars set.
+ * Falls back gracefully to an in-memory limiter if Upstash is unavailable.
+ */
+export function createRateLimiterPersistent(options?: RateLimiterOptions): RateLimiter {
+  const maxAttempts = options?.maxAttempts ?? 10
+  const windowMs = options?.windowMs ?? 10 * 60 * 1000
+
+  // Attempt to load Upstash client lazily; if unavailable, fall back.
+  let redisClient: { zrangebyscore: (k: string, min: number, max: string) => Promise<unknown[]>; zremrangebyscore: (k: string, min: string, max: number) => Promise<unknown>; zadd: (k: string, ...m: [number, number][]) => Promise<unknown>; expire: (k: string, s: number) => Promise<unknown>; del: (k: string) => Promise<unknown> } | null = null
+  try {
+    // Dynamic import via eval-free lazy require replacement: use global fetch-based
+    // Upstash REST only when configured. Avoids require() (ESM-forbidden) and
+    // keeps the dependency optional at runtime.
+    const upstashUrl = process.env.UPSTASH_REDIS_REST_URL
+    const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN
+    if (upstashUrl && upstashToken) {
+      redisClient = createUpstashRestClient(upstashUrl, upstashToken)
+    }
+  } catch {
+    // Upstash not configured -> in-memory fallback
+    redisClient = null
+  }
+
+  // In-memory fallback (as before) – same implementation as createRateLimiter
+  const storage = new Map<string, number[]>()
+
+  const check = async (key: string, explicitNow?: number): Promise<RateLimitResult> => {
+    const now = explicitNow ?? Date.now()
+    let timestamps: number[] = []
+
+    if (redisClient) {
+      try {
+        const stored = await redisClient.zrangebyscore(key, now - windowMs, '+inf')
+        timestamps = Array.isArray(stored) ? stored.map(Number) : []
+      } catch {
+        // On any Redis error, fall back to in-memory for this key
+        timestamps = storage.get(key) || []
+      }
+    } else {
+      timestamps = storage.get(key) || []
+    }
+
+    // Prune timestamps older than window
+    const recent = timestamps.filter((t) => now - t < windowMs)
+
+    if (recent.length >= maxAttempts) {
+      const oldest = recent[0]
+      const retryAfterSec = Math.max(1, Math.ceil((oldest + windowMs - now) / 1000))
+      if (redisClient) {
+        try {
+          await redisClient.zremrangebyscore(key, '-inf', oldest)
+        } catch {}
+      } else {
+        storage.set(key, recent)
+      }
+      return { allowed: false, retryAfterSec }
+    }
+
+    const newTimestamps = [...recent, now]
+    if (redisClient) {
+      try {
+        const members = newTimestamps.map((t) => [t, t] as [number, number])
+        await redisClient.zadd(key, ...members)
+        await redisClient.expire(key, Math.ceil(windowMs / 1000))
+      } catch {
+        storage.set(key, newTimestamps)
+      }
+    } else {
+      storage.set(key, newTimestamps)
+    }
+    return { allowed: true, retryAfterSec: 0 }
+  }
+
+  const reset = async (key: string): Promise<void> => {
+    if (redisClient) {
+      try {
+        await redisClient.del(key)
+      } catch {
+        storage.delete(key)
+      }
+    } else {
+      storage.delete(key)
+    }
+  }
+
+  return { check, reset }
+}
 
 /**
  * Validates company tier state transitions.
