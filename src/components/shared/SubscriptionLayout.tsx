@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { Check, Sparkles, Shield, Zap, X } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
 
 interface Company {
   id: string
@@ -174,11 +173,9 @@ export default function SubscriptionLayout({ company }: SubscriptionLayoutProps)
           const isSelected = selectedPlan?.value === plan.value
 
           return (
-            <motion.div
+            <div
               key={plan.value}
-              whileHover={{ y: -6, scale: 1.01 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-              className={`relative flex flex-col justify-between p-8 rounded-2xl border transition-all duration-300 min-h-[480px] ${plan.style} ${
+              className={`relative flex flex-col justify-between p-8 rounded-2xl border transition-[box-shadow,border-color,translate,scale] duration-300 min-h-[480px] hover:-translate-y-1.5 hover:scale-[1.01] ${plan.style} ${
                 isSelected ? 'ring-4 ring-primary/20 border-primary' : ''
               }`}
             >
@@ -223,18 +220,12 @@ export default function SubscriptionLayout({ company }: SubscriptionLayoutProps)
                   </div>
                   
                   <div className="flex items-baseline gap-1">
-                    <AnimatePresence mode="wait">
-                      <motion.span
-                        key={plan.price}
-                        initial={{ opacity: 0, y: -6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 6 }}
-                        transition={{ duration: 0.15 }}
-                        className={`text-3xl font-extrabold tracking-tight ${plan.dark ? 'text-white' : 'text-gray-900'}`}
-                      >
-                        {plan.price}
-                      </motion.span>
-                    </AnimatePresence>
+                    <span
+                      key={plan.price}
+                      className={`price-swap text-3xl font-extrabold tracking-tight ${plan.dark ? 'text-white' : 'text-gray-900'}`}
+                    >
+                      {plan.price}
+                    </span>
                     <span className={`text-[10px] font-mono uppercase ${plan.dark ? 'text-slate-500' : 'text-gray-400'}`}>
                       / {plan.period}
                     </span>
@@ -284,7 +275,7 @@ export default function SubscriptionLayout({ company }: SubscriptionLayoutProps)
                   </button>
                 )}
               </div>
-            </motion.div>
+            </div>
           )
         })}
       </div>

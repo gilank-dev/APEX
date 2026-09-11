@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+
+// Zero framer-motion: accordion uses the CSS grid-rows 0fr→1fr height trick.
 
 export default function LandingFaq() {
   const [selectedFaq, setSelectedFaq] = useState<number | null>(null)
@@ -37,26 +38,21 @@ export default function LandingFaq() {
           <div key={idx} className="border border-border rounded-lg bg-white overflow-hidden transition-all">
             <button
               onClick={() => setSelectedFaq(isOpen ? null : idx)}
+              aria-expanded={isOpen}
               className="w-full px-6 py-4 flex justify-between items-center text-left hover:bg-gray-50 transition-colors cursor-pointer"
             >
               <span className="text-xs font-bold text-gray-950 uppercase tracking-wide">{faq.q}</span>
               <span className="text-xs text-primary font-mono font-bold">{isOpen ? '[-]' : '[+]'}</span>
             </button>
-            <AnimatePresence>
-              {isOpen && (
-                <motion.div
-                  initial={{ height: 0 }}
-                  animate={{ height: 'auto' }}
-                  exit={{ height: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="overflow-hidden bg-gray-50"
-                >
-                  <p className="px-6 py-4 text-xs text-gray-600 leading-relaxed border-t border-border">
-                    {faq.a}
-                  </p>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <div
+              className={`grid transition-[grid-template-rows] duration-200 ease-out ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
+            >
+              <div className="overflow-hidden bg-gray-50">
+                <p className="px-6 py-4 text-xs text-gray-600 leading-relaxed border-t border-border">
+                  {faq.a}
+                </p>
+              </div>
+            </div>
           </div>
         )
       })}
