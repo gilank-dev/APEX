@@ -82,7 +82,12 @@ export default function RealtimeDashboard({ companyId, slug, activeModules, init
         { event: '*', schema: 'public', table: 'inventory_assets', filter: `company_id=eq.${companyId}` },
         () => { void refresh() }
       )
-      .on('system', { event: 'disconnect' }, () => setConnected(false))
+      // NOTE: no `.on('system', ...)` binding. In realtime-js the system
+      // binding matcher only compares the message *type* (system), NOT the
+      // filter.event, so ANY system message (e.g. the "Subscribed to
+      // PostgreSQL" ack that follows every successful join) would fire it
+      // and flip the badge back to polling. Connection health is tracked via
+      // the subscribe status callback below instead.
       .subscribe((status: string) => {
         setConnected(status === 'SUBSCRIBED')
         if (status === 'SUBSCRIBED') void refresh()
