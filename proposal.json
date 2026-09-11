@@ -1,0 +1,13 @@
+{
+  "proposed_headers": [
+    "Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.supabase.co https://fonts.gstatic.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests;",
+    "X-Content-Type-Options: nosniff",
+    "X-Frame-Options: SAMEORIGIN",
+    "Referrer-Policy: strict-origin-when-cross-origin",
+    "Strict-Transport-Security: max-age=63072000; includeSubDomains; preload",
+    "Permissions-Policy: camera=allow, geolocation=allow; microphone=()"
+  ],
+  "report_file": "docs/SECURITY_HEADERS_PROPOSAL.md",
+  "riskiest_csp_decision": "allowing 'unsafe-inline' for script-src and style-src to support Tailwind CSS and inline styles in Next.js App Router, which reduces CSP strictness but is necessary for current frontend stack functionality",
+  "summary": "Proposed production-grade security headers for APEX Next.js 16 application deployed on Vercel. Headers include CSP optimized for Supabase Realtime (https:// and wss:// *.supabase.co), Google Fonts, and Tailwind CSS via 'unsafe-inline'; HSTS with preload for HTTPS enforcement; Permissions-Policy selectively allowing camera and geolocation for selfie absensi while blocking microphone; and standard X-Frame-Options, X-Content-Type-Options, and Referrer-Policy for defense-in-depth. The CSP 'unsafe-inline' decision is the riskiest trade-off, mitigated by keeping other directives strict and planning for future nonce-based CSP migration."
+}
