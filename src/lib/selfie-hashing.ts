@@ -1,17 +1,30 @@
-import { z } from "zod";
-
 // ---------------------------------------------------------------------------
 // §2.2 Cryptographic Selfie Hashing
 // Client-side SHA-256 hashing for selfie images captured via camera.
+// (Zero-dependency: manual validation replaces the previous zod schema,
+//  keeping the 464KB zod runtime out of the attendance chunk.)
 // ---------------------------------------------------------------------------
 
-/**
- * 32 random bytes generated with rejection sampling to bias
- * toward uniformity — identical to the pattern in security.ts.
- */
+const MAX_SELFIE_BYTES = 10 * 1024 * 1024; // 10 MB
+
+function validateSelfieFile(file: File): File {
+  if (!(file instanceof File)) {
+    throw new Error("Must be an image file");
+  }
+  if (!file.type.startsWith("image/")) {
+    throw new Error("Must be an image file");
+  }
+  if (file.size > MAX_SELFIE_BYTES) {
+    throw new Error("Max file size is 10 MB");
+  }
+  return file;
+}
+
+export type SelfieFile = File;
+
+/** Cryptographically-secure random bytes. */
 function secureRandomBytes(length: number): Uint8Array {
-  const bytes = crypto.getRandomValues(new Uint8Array(length));
-  return bytes;
+  return crypto.getRandomValues(new Uint8Array(length));
 }
 
 function bytesToHex(buf: ArrayBuffer | Uint8Array): string {
@@ -20,16 +33,6 @@ function bytesToHex(buf: ArrayBuffer | Uint8Array): string {
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 }
-
-// ---------------------------------------------------------------------------
-// Schema — consumer can validate an incoming File before hashing.
-// ---------------------------------------------------------------------------
-export const SelfieFileSchema = z
-  .instanceof(File)
-  .refine((f) => f.type.startsWith("image/"), "Must be an image file")
-  .refine((f) => f.size <= 10 * 1024 * 1024, "Max file size is 10 MB");
-
-export type SelfieFile = z.infer<typeof SelfieFileSchema>;
 
 /**
  * Hashed selfie result returned by `hashSelfie`.
@@ -72,7 +75,7 @@ export async function hashSelfie(
   existingSalt?: string,
 ): Promise<SelfieHash> {
   // Validate the file before processing.
-  SelfieFileSchema.parse(file);
+  validateSelfieFile(file);
 
   // 1. Read file bytes.
   const buffer = await file.arrayBuffer();
