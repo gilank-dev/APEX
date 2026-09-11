@@ -211,7 +211,7 @@ export default function Home() {
           <div className="lg:col-span-5 flex justify-center">
             <div className="p-2 bg-white border border-border rounded-lg shadow-sm w-full max-w-sm overflow-hidden">
               <Image 
-                src="/apex_payroll_illustration.png" 
+                src="/apex_payroll_illustration.webp" 
                 alt="Diagram arsitektur keamanan Apex: isolasi workspace per perusahaan dengan Row Level Security dan log absensi yang tidak bisa diubah"
                 width={500}
                 height={350}

@@ -14,7 +14,7 @@ export default function LandingHeroVisual() {
         className="w-full max-w-md sm:max-w-full bg-white border border-border rounded-lg shadow-xl overflow-hidden p-2"
       >
         <Image 
-          src="/apex_dashboard_mockup.png" 
+          src="/apex_dashboard_mockup.webp" 
           alt="Apex enterprise control center dashboard interface displaying live telemetry, shift attendance, and low-stock SKU inventory" 
           width={800}
           height={500}

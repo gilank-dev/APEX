@@ -160,56 +160,56 @@ describe('APEX Brutal Security Test Suite', () => {
   })
 
   describe('4. In-Memory Rate Limiter', () => {
-    it('allows 10 attempts, then blocks with retryAfterSec > 0', () => {
+    it('allows 10 attempts, then blocks with retryAfterSec > 0', async () => {
       const limiter = createRateLimiter({ maxAttempts: 10, windowMs: 600000 })
       const key = 'test-ip-1'
       const now = 100000
 
       // Attempts 1 to 10 must succeed
       for (let i = 1; i <= 10; i++) {
-        const res = limiter.check(key, now)
+        const res = await limiter.check(key, now)
         assert.strictEqual(res.allowed, true, `Attempt ${i} should be allowed`)
         assert.strictEqual(res.retryAfterSec, 0)
       }
 
       // 11th attempt must be blocked
-      const blocked = limiter.check(key, now)
+      const blocked = await limiter.check(key, now)
       assert.strictEqual(blocked.allowed, false)
       assert.ok(blocked.retryAfterSec > 0, 'retryAfterSec must be greater than 0')
     })
 
-    it('maintains independent rate-limit buckets per key', () => {
+    it('maintains independent rate-limit buckets per key', async () => {
       const limiter = createRateLimiter({ maxAttempts: 2, windowMs: 60000 })
-      limiter.check('user-A', 1000)
-      limiter.check('user-A', 1000)
-      assert.strictEqual(limiter.check('user-A', 1000).allowed, false)
+      await limiter.check('user-A', 1000)
+      await limiter.check('user-A', 1000)
+      assert.strictEqual((await limiter.check('user-A', 1000)).allowed, false)
 
       // Different key should still be allowed
-      assert.strictEqual(limiter.check('user-B', 1000).allowed, true)
+      assert.strictEqual((await limiter.check('user-B', 1000)).allowed, true)
     })
 
-    it('resets counters when reset(key) is invoked', () => {
+    it('resets counters when reset(key) is invoked', async () => {
       const limiter = createRateLimiter({ maxAttempts: 2, windowMs: 60000 })
-      limiter.check('user-C', 1000)
-      limiter.check('user-C', 1000)
-      assert.strictEqual(limiter.check('user-C', 1000).allowed, false)
+      await limiter.check('user-C', 1000)
+      await limiter.check('user-C', 1000)
+      assert.strictEqual((await limiter.check('user-C', 1000)).allowed, false)
 
       limiter.reset('user-C')
-      assert.strictEqual(limiter.check('user-C', 1000).allowed, true)
+      assert.strictEqual((await limiter.check('user-C', 1000)).allowed, true)
     })
 
-    it('handles clock-math boundary and window rollover correctly', () => {
+    it('handles clock-math boundary and window rollover correctly', async () => {
       const windowMs = 60000 // 1 minute
       const limiter = createRateLimiter({ maxAttempts: 2, windowMs })
       const startTime = 1000
 
-      limiter.check('key-rollover', startTime)
-      limiter.check('key-rollover', startTime)
-      assert.strictEqual(limiter.check('key-rollover', startTime).allowed, false)
+      await limiter.check('key-rollover', startTime)
+      await limiter.check('key-rollover', startTime)
+      assert.strictEqual((await limiter.check('key-rollover', startTime)).allowed, false)
 
       // Past window boundary: all previous attempts expired
       const afterWindow = startTime + windowMs + 10
-      const rolloverRes = limiter.check('key-rollover', afterWindow)
+      const rolloverRes = await limiter.check('key-rollover', afterWindow)
       assert.strictEqual(rolloverRes.allowed, true)
     })
   })
