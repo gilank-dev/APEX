@@ -9,16 +9,15 @@
 
 - [x] CI merah: `npm run test:unit` (vitest) tanpa test file → exit 1. FIX: hapus step, semua test = `node --test` (93/93). (Dwight)
 - [x] Lockfile cross-platform: regen HANYA via `docker run node:24` container. SOP tersimpan. (Dwight — commit 2ad2bf5)
+- [x] CI 0-job mystery: run b85396e→a36d4ee gagal instan 0 job (check suite failure, 0 check runs) persis sejak step E2E secrets-guard ditambahkan. FIX: kembalikan workflow ke struktur 81833df yang terbukti, hapus step E2E + workflow regen-lockfile. (Dwight — commit 453d769)
 - [ ] Verifikasi CI hijau setelah fix + Vercel deploy success. (Dwight)
 
 ## 🟠 P1 — Performance "cepat, makin cepat, sangat cepat & ringan" (Lead Eng + SE)
 
-- [ ] Landing: ganti framer-motion reveal → CSS `@starting-style`/transition murni di LandingBentoGrid/FAQ/HeroVisual. Target: -2 chunk JS (~250KB) dari critical path. (SE: Jim)
-- [ ] LandingHeader mobile menu: AnimatePresence → CSS transition, hapus import framer-motion. (SE: Jim)
-- [ ] SubscriptionLayout: motion → CSS transition. (SE: Jim)
-- [ ] Audit dynamic import: FeatureClient 1144 baris — pastikan hanya load di route feature, bukan global. (Lead Eng)
-- [ ] `next.config.ts`: enable `compress` + `poweredByHeader: false` + `reactStrictMode` check. (Lead Eng)
-- [ ] Bundle audit pasca-perubahan: target total JS critical path < 300KB (gzip), Lighthouse mobile > 90. (Lead Eng — verifikasi akhir)
+- [x] Landing: buang framer-motion total — 5 file → CSS murni (scroll-driven reveal, grid-rows accordion, @starting-style, hover transform). Landing JS: ~196K gzip / 11 chunks. (Lead Eng — commit a36d4ee)
+- [x] Buang zod dari client bundle — validasi manual ganti schema trivial. Total JS build 2.2MB → 1.6MB. (Lead Eng — commit 77332d2)
+- [x] Supabase 252K chunk hanya di-load halaman authenticated, landing/login bersih. (Lead Eng — audit)
+- [x] next.config: poweredByHeader:false, compress:true, optimizePackageImports +goey-toast. (Lead Eng)
 - [ ] Icon tree-shaking audit: lucide-react named imports (verify optimizePackageImports udah jalan). (SE: Jim)
 - [ ] Image audit sisa: pastikan semua <img> di module pages pakai next/image + loading="lazy" + width/height eksplisit. (SE: Jim)
 
